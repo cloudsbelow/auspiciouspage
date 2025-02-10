@@ -1,0 +1,104 @@
+body {
+  background-color: #2f3134;
+}
+.nf-window{
+  position:absolute;
+  overflow:hidden;
+  --fieldscale:1;
+  user-select: none;
+}
+.nf-window>canvas{
+  position:absolute;
+  width:100%;
+  height:100%;
+}
+.nf-field{
+  position:absolute;
+  transform:scale(var(--fieldscale));
+  transform-origin: top left;
+  z-index:5;
+}
+
+.nfv-cont{
+  position:absolute;
+  border-radius:7px;
+  background-color: #363636;
+  color:white;
+  min-width: 100px;
+  box-shadow: 2px 2px 7px 2px #0005;
+}
+.nfv-contselected{
+  box-shadow: 2px 2px 7px 2px #0005, 0px 0px 7px 2px #fff8;
+}
+.nfv-head{
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  padding-left:5px;
+}
+.nfv-inpcont{
+  position:relative;
+  min-height:30;
+}
+.nfv-inpplug{
+  position:absolute;
+  width:34px;
+  left:-17px;
+  top: -3px;
+  height:30px;
+  padding-top:15px;
+  padding-left:17px;
+  box-sizing: border-box;
+}
+.nfv-inpbody{
+  margin-left:8px;
+  padding-top:2px;
+}
+.nfv-out{
+  position:absolute;
+  width:0px;
+  padding-top:5px;
+  right:15px;
+  top:0px;
+}
+.nfv-outplug{
+  position:relative;
+  margin-top:13px;
+  width:22px;
+  height:5px;
+  padding-top:12px;
+  padding-left:15px;
+}
+
+.nfi-b{
+  position:relative;
+  width:10px;
+  height:10px;
+  transform:translate(-50%,-50%);
+  border-radius: 10px;
+  background-color: white;
+  border:2px solid #222;
+}
+
+
+
+
+.cm-elem{
+  background-color: black;
+  position:absolute;
+  color:white;
+  z-index:1000;
+  border:1px solid black;
+  border-radius: 4px;
+}
+.cm-elem > div{
+  padding-left:10px;
+  padding-right:15px;
+  user-select: none;
+}
+.cm-hb{
+  background-color:white;
+  height:2px;
+}
+.cm-basicopt:hover{
+  background-color: #333;
+}
