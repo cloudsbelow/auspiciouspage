@@ -448,12 +448,18 @@ const qcomp=(ex, bits=8)=>{
   if(b[1]>=256) throw Error("Your program needs more than 256 registers. Please wait for 16-bit support.");
   let header = new Uint32Array([1,a.using.length,b[1],0,0])
   let c=[header]
-  a.using.forEach(x=>{
-    c.push(new Uint8Array(x.length));
+  let offset = 20;
+  a.using.forEach(([x,s])=>{
+    x=x.substring(1)
+    c.push(new Uint8Array([x.length]));
     let d=new TextEncoder().encode(x);
     if(d.byteLength != x.length || x.length>(1<<bits)-1) throw Error("bad channel name: "+x);
     c.push(d)
+    offset+=1+x.length;
   })
   c.push(b[0])
-  return b_cc(c);
+  header[3]=offset;
+  header[4]=b[0].byteLength;
+  console.log(c);
+  return b_cc(...c);
 }
