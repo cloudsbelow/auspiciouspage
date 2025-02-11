@@ -10,12 +10,30 @@ const HPTOK = '!T!'
 
 
 const codes = {};
+const ValueWrapper = function(v){this.v=v}
+Object.setPrototypeOf(ValueWrapper.prototype,null)
+ValueWrapper.prototype.valueOf = ()=>0
+const StringWrapper = function(v){ValueWrapper.call(this,v)}
+StringWrapper.prototype=Object.create(ValueWrapper.prototype)
+StringWrapper.prototype.arrAppend = function(arr,bits=8){
+  if(bits == 8) for(let i=0; i<this.v.length; i++)arr.push(this.v.charCodeAt(i));
+  else throw Error();
+}
+const IntWrapper = function(v){ValueWrapper.call(this,v)}
+IntWrapper.prototype = Object.create(ValueWrapper.prototype);
+IntWrapper.prototype.arrAppend = function(arr, bits=8){
+  const v = new DataView(new Int32Array([this.v]).buffer)
+  if(bits == 8) for(let i=0; i<4; i++)arr.push(v.getUint8(i));
+  else throw Error();
+}
+
 const enums=`
     noop, loadZero, loadImmediateByte, loadImmediateInt, loadChannel, storeChannel, copy,
-    startAccInit0, startAccInit1, startAccInitImm, startAccInitReg, startAccNoInit, startAcc, finishAcc,
-    mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, 
-    multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI,
+    startAccInit0, startAccInit1, startAccInitImm, startAccInitReg, startAcc, finishAcc,
+    mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
+    multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
+    jnz, setsptr, setsptrI, loadsptr,
 `.replaceAll(/\s/g,"").split(",")
 enums.forEach((x,i)=>codes[x]=i);
 
@@ -27,11 +45,11 @@ function post(delimiters){
 }
 let delimiters = ","
 
-const startMaybeImmAcc = (first,reg,instrs)=>{
-  if(first[1]!==null)instrs.push([codes.startAccInitImm,reg,first[1]]);
+const startMaybeImmAcc = (first,instrs)=>{
+  if(first[1]!==null)instrs.push([codes.startAccInitImm,first[1]]);
   else{
     if(first[0]===null || first[0]===undefined) throw Error("bad")
-    instrs.push([codes.startAccInitReg,reg,first[0]]);
+    instrs.push([codes.startAccInitReg,first[0]]);
   }
 }
 const addMaybeImmInstr = (tuple, op, instrs)=>{
@@ -44,11 +62,14 @@ const addMaybeImmInstr = (tuple, op, instrs)=>{
 }
 const doSimpleAcc = (op,s,reg,fn,instrs)=>{
   const v=s.expr;let toks = v.match(TOKRE);
-  startMaybeImmAcc(fn(toks[0]),reg,instrs);
+  doSimpleAccToks(op,toks,reg,fn,instrs)
+}
+const doSimpleAccToks = (op,toks,reg,fn,instrs)=>{
+  startMaybeImmAcc(fn(toks[0]),instrs);
   for(let i=1; i<toks.length; i++){
     addMaybeImmInstr(fn(toks[i]),op,instrs);
   }
-  instrs.push(codes.finishAcc);
+  instrs.push([codes.finishAcc,reg]);
 }
 const simpleImmSwap = (op, reg, first, second, instrs, swapped=0)=>{
   if(swapped>2) throw Error("bad");
@@ -57,18 +78,59 @@ const simpleImmSwap = (op, reg, first, second, instrs, swapped=0)=>{
   else instrs.push([codes[op+"I"],reg,first[0],second[1]])
 }
 
+const pfuncs={
+  max:{
+    pconst:(v,a)=>v.match(TOKRE).reduce((x,y)=>Math.max(x,a.gsm(y).c),-Infinity),
+    mkinstrs:doSimpleAccToks.bind(null,"max")
+  },
+  min:{
+    pconst:(v,a)=>v.match(TOKRE).reduce((x,y)=>Math.min(x,a.gsm(y).c),-Infinity),
+    mkinstrs:doSimpleAccToks.bind(null,"min")
+  },
+  take:{
+    pconst:(v,a)=>{
+      const toks = v.match(TOKRE);
+      return a.gsm(toks[a.gsm(toks[0])+1])
+    }, mkinstrs:(toks,reg,fn,instrs)=>{
+      addMaybeImmInstr(fn(toks[0]),"setsptr",instrs)
+      doSimpleAccToks("take",toks.slice(1), reg, fn, instrs)
+    }
+  },
+  clamp:{
+    pconst:(v,a)=>{
+      const toks = v.match(TOKRE); if(toks.length!=3) throw Error("bad")
+      return Math.max(a.gsm(toks[1]),Math.min(a.gsm(toks[2]),a.gsm(toks[0])))
+    },
+    mkinstrs:(toks, reg,fn,instrs)=>{
+      startMaybeImmAcc(fn(toks[0]),instrs);
+      addMaybeImmInstr(fn(toks[1]),"max",instrs)
+      addMaybeImmInstr(fn(toks[2]),"min",instrs)
+      instrs.push([codes.finishAcc,reg])
+    }
+  }
+}
+
 const orderOfOps=[{  
     remid:`(0x|0b)?\\d+`,
     pconst:(v,a)=>v.startsWith('0b')?parseInt(v,v.substring(2)):parseInt(v),
-    mkinstrs: (s,reg,fn,instrs)=>instrs.push([codes.loadImmediateInt, reg, s.c])
+    mkinstrs: (s,reg,fn,instrs)=>instrs.push([codes.loadImmediateInt, reg, new IntWrapper(s.c)])
   },{ 
     re: /\@\w+/g
   },{ 
     re:PARENRE,
-    pconst:(v,a)=>a.gsm(v.match(TOKRE)).c,
+    pconst:(v,a)=>{
+      if(v[0]=="(") return a.gsm(v.match(TOKRE)).c
+      return pfuncs[v.match(/^[a-z]+/)[0]].pconst(v,a);
+    },
     mkinstrs: (s,reg,fn,instrs)=>{
       const v=s.expr; let toks = v.match(TOKRE); let fi=fn(toks[0])
-      instrs.push([codes['copy'+(fi[1]!==null?"I":"")], reg, fi[1]??fi[0]])
+      if(v[0]=="(") instrs.push([codes['copy'+(fi[1]!==null?"I":"")], reg, fi[1]??fi[0]]);
+      else{
+        pfuncs[v.match(/^[a-z]+/)[0]].mkinstrs(toks,reg,fn,instrs)
+      }
+    },
+    canUseImm: (v)=>{
+      return true;
     }
   },{ 
     remid:`[\\!\\~]${TOK}`,ndelim:"\\!\\~",
@@ -88,11 +150,11 @@ const orderOfOps=[{
       return s;
     }, mkinstrs:(s,reg,fn,instrs)=>{
       const v=s.expr; let toks = v.match(TOKRE); let ops=v.match(/[\*\/\%]/g);
-      startMaybeImmAcc(fn(toks[0]),reg,instrs);
+      startMaybeImmAcc(fn(toks[0]),instrs);
       for(let i=0; i<ops.length; i++){
         addMaybeImmInstr(fn(toks[i+1]),{"%":"mod","/":"div","*":"mult"}[ops[i]],instrs);
       }
-      instrs.push(codes.finishAcc);
+      instrs.push([codes.finishAcc,reg]);
     }
   },{
     remid:`${TOK}?([\\+\\-]${TOK})+`,ndelim:"\\+\\-",
@@ -109,11 +171,11 @@ const orderOfOps=[{
       const v=s.expr;let toks = v.match(TOKRE); let ops=v.match(/[\+\-]/g)??[];
       let offset = v[0]=='-'?0:1;
       if(v[0]=='-')instrs.push([codes.startAccInitZero,reg]);
-      else startMaybeImmAcc(fn(toks[0]),reg,instrs)
+      else startMaybeImmAcc(fn(toks[0]),instrs)
       for(let i=0; i<ops.length; i++){
         addMaybeImmInstr(fn(toks[i+offset]),{"+":"add","-":"sub"}[ops[i]],instrs);
       }
-      instrs.push(codes.finishAcc);
+      instrs.push([codes.finishAcc,reg]);
     }
   },{
     remid:`(${TOK}[\\x81\\x82])+${TOK}`,rep:[["<<","\x81"],[">>","\x82"]],ndelim:"\\x81\\x82",
@@ -128,11 +190,11 @@ const orderOfOps=[{
       return s;
     }, mkinstrs:(s,reg,fn,instrs)=>{
       const v=s.expr; let toks = v.match(TOKRE); let ops=v.match(/[\*\/\%]/g);
-      startMaybeImmAcc(fn(toks[0]),reg,instrs);
+      startMaybeImmAcc(fn(toks[0]),instrs);
       for(let i=0; i<ops.length; i++){
         addMaybeImmInstr(fn(toks[i+1]),{"\x81":"lshift","\x82":"rshift"}[ops[i]],instrs);
       }
-      instrs.push(codes.finishAcc);
+      instrs.push([codes.finishAcc,reg]);
     }
   },{
     remid:`${TOK}[\\x83\\x84\\<\\>]${TOK}`,rep:[["<=","\x83"],[">=","\x84"]],ndelim:"\\x83\\x84\\<\\>",
@@ -153,7 +215,7 @@ const orderOfOps=[{
       if(ops[0]=="\x85") return (a.gsm(toks[0]).c == a.gsm(toks[1]).c)?1:0;
       if(ops[0]=="\x86") return (a.gsm(toks[0]).c != a.gsm(toks[1]).c)?1:0;
     }, mkinstrs:(s,reg,fn,instrs)=>{
-      const v=s.expr; let toks = v.match(TOKRE); let ops=v.match(/[\x83\x84\<\>]/g);
+      const v=s.expr; let toks = v.match(TOKRE); let ops=v.match(/[\x85\x86\<\>]/g);
       simpleImmSwap({"\x85":"eq","\x86":"ne"}[ops[0]],reg,fn(toks[0]),fn(toks[1]),instrs);
     }
   },{
@@ -178,6 +240,7 @@ const orderOfOps=[{
     mkinstrs:doSimpleAcc.bind(null,"lor"),
   },
 ]
+
 
 const allreps=[]
 for(let i=orderOfOps.length-1; i>=0; i--){
@@ -206,7 +269,7 @@ class IntEx{
     this.emitting = []
     this.symcounter = 0
 
-    const lines = text.replaceAll(/\/\/.*$/gm,"").match(/^.+$/gm).map(s=>{
+    const lines = text.replaceAll(/\/\/.*$/gm,"").match(/(^|(?<=\;))[^;]*\w[^;]*($|(?=;))/gm).map(s=>{
       let str = s.replaceAll(/\s/g,"")
       for(let [sub, tok] of allreps){
         str = str.replaceAll(sub, tok);
@@ -224,10 +287,14 @@ IntEx.prototype.gsm = function(tok){
   if(tok[0]=="$") return this.gsm(this.macrot[tok].s)
   return this.microt[tok];
 }
+IntEx.prototype.ssm = function(tok){
+  if(tok[0]=="$") return this.ssm(this.macrot[tok].s)
+  return tok;
+}
 IntEx.prototype.symadd = function(expr, type){
   if(this.symmap[expr]) return this.symmap[expr];
-  let insym = [...new Set(type==-1?[]:expr.match(TOKRE))]
-  //console.log(type, expr);
+  let insym = [...new Set(type==-1?[]:expr.match(TOKRE))].map(this.ssm.bind(this))
+  //console.log(expr, insym);
   if(insym.every(x=>this.gsm(x).t==0) && orderOfOps[type].pconst && type!=0){
     return this.symadd(orderOfOps[type].pconst(expr,this).toString(),0);
   }
@@ -255,7 +322,7 @@ IntEx.prototype.symReduce = function(f){
       };
     }
     if(m.length == 0){
-      let final = f.match(new RegExp(`^${TOK}$`))[0]
+      let final = f.match(new RegExp(`^${TOK}$`))?.[0]
       if(final){
         return this.symmap[forig]=final
       } else {
@@ -285,7 +352,7 @@ function reverseObj(o){
   }
   return r;
 }
-IntEx.prototype.compileout = function(bits=8){
+IntEx.prototype.compileout = function(bits=8,verbose=false){
   
   const lastused = {}
   const queue = []
@@ -296,7 +363,7 @@ IntEx.prototype.compileout = function(bits=8){
     if(lastused[m]) return;
     const s=this.microt[m]
     if(s.t==1) return;
-    const ci=s.t!=2
+    const ci=(s.t!=2)||(s.t==2 && orderOfOps[2].canUseImm(s))
     const use = []
     s.in.forEach((n)=>{
       n=tobase(n)
@@ -330,7 +397,7 @@ IntEx.prototype.compileout = function(bits=8){
   }
   queue.forEach((x,i)=>{
     if(x[0] == '@'){
-      instr.push([codes.storeChannel,regs[tobase(this.macrot[x].s)],x.length-1,x.substring(1)])
+      instr.push([codes.storeChannel,regs[tobase(this.macrot[x].s)],x.length-1,new StringWrapper(x.substring(1))])
       return
     }
     const s=this.microt[x];
@@ -342,19 +409,51 @@ IntEx.prototype.compileout = function(bits=8){
       regs[m]=null;
     });
   })
+  //console.log(instr)
   let final=[];
   let fail=false;
   const farr=(arr)=>{
     arr.forEach(x => {
       if(Array.isArray(x)) return farr(x);
+      if(x instanceof ValueWrapper) return x.arrAppend(final)
       if(x===null || x===undefined || x>=1<<bits) return fail=true;
       final.push(x)
     });
   }
   farr(instr)
-  return fail?null:new Uint8Array(final)
+  if(verbose)console.log(instr,next);
+  return fail?null:[new Uint8Array(final),next]
 }
 
 
-let a=new IntEx("@b = (@1&@2 || @3&@4)*3+5")
-a.compileout()
+
+//let a=new IntEx("@b = take(@0,clamp(@1,@3,max(1,2,3)),@1,2)")
+//console.log(a.compileout())
+function b_cc(...bufs){
+  let offsets = [];
+  let coff = 0
+  for(let i=0; i<bufs.length; i++){
+    offsets.push(coff);
+    coff+=bufs[i].byteLength
+  }
+  let res = new Uint8Array(coff)
+  for(let i=0; i<bufs.length; i++){
+    res.set(new Uint8Array(bufs[i].buffer, bufs[i].byteOffset, bufs[i].byteLength),offsets[i])
+  }
+  return res
+}
+const qcomp=(ex, bits=8)=>{
+  let a = new IntEx(ex);
+  let b=a.compileout();
+  if(b[1]>=256) throw Error("Your program needs more than 256 registers. Please wait for 16-bit support.");
+  let header = new Uint32Array([1,a.using.length,b[1],0,0])
+  let c=[header]
+  a.using.forEach(x=>{
+    c.push(new Uint8Array(x.length));
+    let d=new TextEncoder().encode(x);
+    if(d.byteLength != x.length || x.length>(1<<bits)-1) throw Error("bad channel name: "+x);
+    c.push(d)
+  })
+  c.push(b[0])
+  return b_cc(c);
+}
