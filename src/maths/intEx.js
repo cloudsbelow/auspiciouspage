@@ -442,6 +442,19 @@ function b_cc(...bufs){
   }
   return res
 }
+let b64v = ""
+for(let i=65; i<91; i++)b64v+=String.fromCharCode(i);
+for(let i=97; i<123; i++)b64v+=String.fromCharCode(i);
+for(let i=48; i<58; i++)b64v+=String.fromCharCode(i);
+b64v+="+/";
+function toB64(a){
+  let str=""; pad=(3-a.length%3)%3;
+  for(let i=0; i<a.length; i+=3){
+    let num = (a[i]<<16)+((a[i+1]??0)<<8)+(a[i+2]??0)
+    str+=b64v[(num>>18)]+b64v[(num>>12)&0x3f]+b64v[(num>>6)&0x3f]+b64v[(num)&0x3f]
+  }
+  return str.substring(0,str.length-pad)+"==".substring(0,pad);
+}
 const qcomp=(ex, bits=8)=>{
   let a = new IntEx(ex);
   let b=a.compileout();
@@ -461,5 +474,5 @@ const qcomp=(ex, bits=8)=>{
   header[3]=offset;
   header[4]=b[0].byteLength;
   console.log(c);
-  return b_cc(...c);
+  return toB64(b_cc(...c));
 }
