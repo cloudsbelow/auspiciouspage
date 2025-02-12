@@ -269,7 +269,7 @@ class IntEx{
     this.emitting = []
     this.symcounter = 0
 
-    const lines = text.replaceAll(/\/\/.*$/gm,"").match(/(^|(?<=\;))[^;]*\w[^;]*($|(?=;))/gm).map(s=>{
+    const lines = text.replaceAll(/\/\/.*$/gm,"").match(/(^|(?<=\;))[^;\n]*\w[^;\n]*($|(?=;))/gm).map(s=>{
       let str = s.replaceAll(/\s/g,"")
       for(let [sub, tok] of allreps){
         str = str.replaceAll(sub, tok);
@@ -459,9 +459,9 @@ const qcomp=(ex, bits=8)=>{
   let a = new IntEx(ex);
   let b=a.compileout();
   if(b[1]>=256) throw Error("Your program needs more than 256 registers. Please wait for 16-bit support.");
-  let header = new Uint32Array([1,a.using.length,b[1],0,0])
-  let c=[header]
-  let offset = 20;
+  let header = new Uint16Array([1,a.using.length,b[1],0])
+  let c=[header, new Uint32Array([b[0].byteLength])]
+  let offset = 12;
   a.using.forEach(([x,s])=>{
     x=x.substring(1)
     c.push(new Uint8Array([x.length]));
@@ -472,7 +472,16 @@ const qcomp=(ex, bits=8)=>{
   })
   c.push(b[0])
   header[3]=offset;
-  header[4]=b[0].byteLength;
-  console.log(c);
+  console.log(c,b_cc(...c));
   return toB64(b_cc(...c));
 }
+
+
+p=`
+  //example program
+  //If 3 divides the channel 'left' and 'right' is greater than 5,
+  //store the max. Otherwise, store 10.
+  
+  $someCondition = @left%3==0 && @right>5
+  @combine = take($someCondition, 10, max(@left,@right,30))
+`
