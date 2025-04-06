@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+body {
+  background-color: #2f3134;
+  color: #fff;
+}
+
+    </style>
+  </head>
+  <body>
+    <h2>Compiler for ChannelMathController</h2>
+    <p>This is a thing humans do, trust me (also sorry for the low effort webpage haha, I overdrafted my willingness to do ui and css stuff this summer)</p>
+    <p>Supported operations: 3-12 of <a href = "https://en.cppreference.com/w/c/language/operator_precedence">C operations</a> as well as ~!. The compiler also currently supports the max, min, clamp and take functions</p>
+    <p>Mark channels with @. You can declare temporary variables with $. The controller will load all used channel variables prior to running your code. Accessing a channel after it has been written to returns the original value. The default behavior is to perform your operation in the entity's update step if one of the channels it is using has changed. This means you don't need to worry about loops, and indeed a line like @x=@x+1 will cause a channel to increment once per frame. RunImmediately will perform the operations immediately on update, making it possible to create an infinite loop. Be careful with it (like don't use it unless you know exactly what you are doing). Sorry, there may be bugs - (in other words, if something doesn't work throw a rock at my window and I'll try to fix it.)</p>
+    <p>New: interop stuff! See list of functions below</p>
+    <textarea id="compilerin" style="width:min(90%,800px);height:300px;">
+      //example program
+      //If 3 divides the channel 'left' and 'right' is greater than 5,
+      //store the max. Otherwise, store 10. Also do some berry stuff.
+      
+      $someCondition = @left%3==0 && @right>5;
+      @combine = take($someCondition, 10, max(@left,@right,30));
+      setFlag<fish>($someCondition&&hasBerry<MapRoom3>(267));
+    </textarea>
+    <!-- <textarea id="compilerin" style="width:min(90%,800px);height:300px;">
+      @x = GetStrawb<a10>(-5+@1+(-3));
+    
+    </textarea> -->
+    <p wow I really am scum></p>
+    <button id="Compileplease">Compile (or at least try)</button>
+    <p>so the way to use these is to put any string arguments in &lt;here&gt; and numerical ones in (there)<br>
+    A generic one would be methodKey&lt;str1, str2&gt;(int1, int2, int3). This should return an int.</p>
+    <p>Comming soon: interop interface for mods to add their own interop functions <br>
+    print(args...) prints stuff to the auspicioushelper debug console <br>
+    hasBerry&lt;Levelname&gt;(id) Checks if the given berry EntityID is collected (Levelname+id) <br>
+    getFlag&lt;flagname&gt;() gets the specified flag <br>
+    setFlag&lt;flagname&gt;(nval) sets the specified flag (nonzero is true) <br>
+    getCounter&lt;countername&gt;()/ setCounter&lt;countername&gt;(nval) follow from above <br>
+    getCoreMode()/ setCoreMode(nval) 1 is icy <br>
+    getPlayer&lt;param&gt;() right now supports speedx, speedy, posx, posy (rounded) <br>
+    killPlayer(choice) kills player if choice is nonzero</p>
+  </body>
+  <script src="intEx.js"></script>
+</html>
