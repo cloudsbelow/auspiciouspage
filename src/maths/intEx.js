@@ -152,7 +152,7 @@ const orderOfOps=[{
     pconst:(v,a)=>v.startsWith('0b')?parseInt(v,v.substring(2)):parseInt(v),
     mkinstrs: (s,reg,fn,instrs)=>instrs.push([codes.loadImmediateInt, reg, new IntWrapper(s.c)])
   },{ 
-    re: /\@\w+/g
+    re: /\@\w+(?:\[[^\]]*\])?/g
   },{ 
     re:PARENRE,
     pconst:(v,a)=>{
@@ -434,7 +434,7 @@ IntEx.prototype.compileout = function(bits=8,verbose=false){
     if(lastused[m]) return;
     const s=this.microt[m]
     if(s.t==1) return;
-    const ci=(s.t!=2)||(s.t==2 && orderOfOps[2].canUseImm(s.expr))
+    const ci=orderOfOps[s.t].canUseImm?.(s.expr)??true;
     const use = []
     s.in.forEach((n)=>{
       n=tobase(n)
