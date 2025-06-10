@@ -1,4 +1,8 @@
 //-- blocks
+const operators = {
+    ADD:["+"],
+}
+
 Blockly.common.defineBlocks({
     channel_identifier: {
         init: function() {
@@ -35,6 +39,19 @@ Blockly.common.defineBlocks({
             this.appendDummyInput('').appendField('time since room transitioned');
             this.setInputsInline(true)
             this.setOutput(true, 'Number');
+            this.setTooltip('');
+            this.setHelpUrl('');
+            this.setColour(225);
+        }
+    },
+    op: {
+        init: function() {
+            this.appendValueInput('OP1');
+            console.log(Object.entries(operators).map(([k,v])=>[v[0],k]))
+            this.appendValueInput('OP2').appendField(new Blockly.FieldDropdown(
+                Object.entries(operators).map(([k,v])=>[v[0],k])), 'OPERATOR');
+            this.setInputsInline(true)
+            this.setOutput(true, null);
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
@@ -191,12 +208,15 @@ generator.forBlock['number'] = function() {
 generator.forBlock['time_since_trans'] = function() {
     return [statement("timeSinceTrans",false,[],[]), Order.NONE];
 }
+generator.forBlock['op'] = function() {
+    const op=operators[block.getFieldValue('OPERATOR')];
+    return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[1]||op[0]} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
+}
 
 generator.forBlock['set'] = function(block) {
     return `${generator.valueToCode(block, 'TO_SET', Order.ATOMIC)} = ${
         generator.valueToCode(block, 'VALUE', Order.ATOMIC)}`;
 }
-
 generator.forBlock['print'] = function(block, generator) {
     const values = [];
     for (let i = 0; i < block.itemCount_; i++) {
@@ -288,6 +308,10 @@ const toolbox = {
         {
             'kind': 'block',
             'type': 'number'
+        },
+        {
+            'kind': 'block',
+            'type': 'op'
         },
         {
             'kind': 'block',
