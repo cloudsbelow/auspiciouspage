@@ -1,14 +1,24 @@
 //-- blocks
-const operators = "+,-,*,/,<=,>=,<,>,==,!=,".split(",").map(v=>[v]).concat([
-    ["modulo","%"],
-    ["left bitshift","<<"],
-    ["right bitshift",">>"],
-    ["bitwise and","&"],
-    ["bitwise xor","^"],
-    ["bitwise or","|"],
-    ["logical and","&"],
-    ["logical or","|"],
-]);
+const operators = [
+    ["+","add"],
+    ["-","sub"],
+    ["*","mult"],
+    ["/","div"],
+    ["==","eq"],
+    ["!=","ne"],
+    ["<=","le"],
+    [">=","ge"],
+    ["<","less"],
+    [">","greater"],
+    ["modulo","mod"],
+    ["left bitshift","lshift"],
+    ["right bitshift","rshift"],
+    ["bitwise and","and"],
+    ["bitwise xor","xor"],
+    ["bitwise or","or"],
+    ["logical and","land"],
+    ["logical or","lor"],
+];//todo: order of operations?
 
 Blockly.common.defineBlocks({
     channel_identifier: {
@@ -56,6 +66,7 @@ Blockly.common.defineBlocks({
             this.appendValueInput('OP1');
             this.appendValueInput('OP2').appendField(new Blockly.FieldDropdown(
                 Object.entries(operators).map(([k,v])=>[v[0],k])), 'OPERATOR');
+            this.appendDummyInput('NAME').appendField('as int?').appendField(new Blockly.FieldCheckbox('FALSE'), 'INTFLAG')
             this.setInputsInline(true)
             this.setOutput(true, null);
             this.setTooltip('');
@@ -228,7 +239,7 @@ generator.forBlock['time_since_trans'] = function(block) {
 }
 generator.forBlock['op'] = function(block) {
     const op=operators[block.getFieldValue('OPERATOR')];
-    return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[1]||op[0]} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
+    return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[1]+(block.getFieldValue('INTFLAG')=="TRUE"?"I":"")} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
 }
 generator.forBlock['not'] = function(block) {
     return [`!(${generator.valueToCode(block, 'VALUE', Order.ATOMIC)})`, Order.NONE];
