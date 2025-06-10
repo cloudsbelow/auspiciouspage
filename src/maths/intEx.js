@@ -452,7 +452,6 @@ IntEx.prototype.compileout = function(bits=8,verbose=false){
     }
     lastused[tobase(x.s)]=queue.length;
   })
-  console.log(queue);
 
   const freed=[]
   let next = this.using.length;
@@ -506,6 +505,49 @@ IntEx.prototype.compileout = function(bits=8,verbose=false){
   }
   return fail?null:[new Uint8Array(final),next]
 }
+
+class IntProg{
+  constructor(text){
+    this.symmap={}
+    this.microt = {} 
+    this.macrot = {}
+    this.using = []
+    this.symcounter = 0
+    const prog  = text.replaceAll(/\/\/.*$/gm,"").replaceAll(/\s/gm,"");
+
+  }
+}
+IntProg.prototype.gsm = function(tok){
+  if(tok[0]=="$") return this.gsm(this.macrot[tok].s)
+  return this.microt[tok];
+}
+IntProg.prototype.ssm = function(tok){
+  if(tok[0]=="$") return this.ssm(this.macrot[tok].s)
+  return tok;
+}
+IntProg.prototype.symReduce = IntEx.prototype.symReduce;
+IntProg.prototype.symadd = function(expr, type){
+  if(this.symmap[expr]) return this.symmap[expr];
+  let insym = [...new Set(type==-1?[]:expr.match(TOKRE))].map(this.ssm.bind(this))
+  //console.log(expr, insym);
+  const ty = orderOfOps[type];
+  if(insym.every(x=>this.gsm(x).t==0) && type!=0 && ty.pconst && (!ty.haspconst||ty.haspconst(expr))){
+    return this.symadd(ty.pconst(expr,this).toString(),0);
+  }
+  const sym = '#'+(++this.symcounter);
+  const s = {
+    expr:expr, t: type,
+    in:insym
+  }
+  if(type == 1){
+    this.using.push([expr,sym]);
+  }
+  if(type==0) s.c=orderOfOps[0].pconst(expr,this);
+  this.symmap[expr] = sym
+  this.microt[sym] = s
+  return sym
+}
+
 
 
 
@@ -569,10 +611,9 @@ if(e)e.onclick = ()=>{
   let s;
   try{
     s=qcomp(document.getElementById("compilerin").value)
-    navigator.clipboard.writeText(s)
-    alert("Success. Copied to clipboard (or I tried to at least). \n"+s);
+    document.getElementById("compilerout").innerHTML = s;
   } catch(err){
-    alert("Failed. The error was "+err+" (not very helpful but probably better than what I get from hlsl)"); throw(err);
+    alert("Failed. The error was "+err+" (look in dev console for more detail maybe)"); throw(err);
   }
 }
   
