@@ -1,6 +1,7 @@
 //-- blocks
 const operators = {
     ADD:["+"],
+
 }
 
 Blockly.common.defineBlocks({
@@ -50,6 +51,16 @@ Blockly.common.defineBlocks({
             console.log(Object.entries(operators).map(([k,v])=>[v[0],k]))
             this.appendValueInput('OP2').appendField(new Blockly.FieldDropdown(
                 Object.entries(operators).map(([k,v])=>[v[0],k])), 'OPERATOR');
+            this.setInputsInline(true)
+            this.setOutput(true, null);
+            this.setTooltip('');
+            this.setHelpUrl('');
+            this.setColour(225);
+        }
+    },
+    not: {
+        init: function() {
+            this.appendValueInput('VALUE').appendField('not');
             this.setInputsInline(true)
             this.setOutput(true, null);
             this.setTooltip('');
@@ -212,6 +223,9 @@ generator.forBlock['op'] = function() {
     const op=operators[block.getFieldValue('OPERATOR')];
     return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[1]||op[0]} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
 }
+generator.forBlock['not'] = function() {
+    return [`!(${generator.valueToCode(block, 'VALUE', Order.ATOMIC)})`, Order.NONE];
+}
 
 generator.forBlock['set'] = function(block) {
     return `${generator.valueToCode(block, 'TO_SET', Order.ATOMIC)} = ${
@@ -312,6 +326,10 @@ const toolbox = {
         {
             'kind': 'block',
             'type': 'op'
+        },
+        {
+            'kind': 'block',
+            'type': 'not'
         },
         {
             'kind': 'block',
