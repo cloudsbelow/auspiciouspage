@@ -1,8 +1,14 @@
 //-- blocks
-const operators = {
-    ADD:["+"],
-
-}
+const operators = "+,-,*,/,<=,>=,<,>,==,!=,".split(",").map(v=>[v]).concat([
+    ["modulo","%"],
+    ["left bitshift","<<"],
+    ["right bitshift",">>"],
+    ["bitwise and","&"],
+    ["bitwise xor","^"],
+    ["bitwise or","|"],
+    ["logical and","&"],
+    ["logical or","|"],
+]);
 
 Blockly.common.defineBlocks({
     channel_identifier: {
@@ -48,7 +54,6 @@ Blockly.common.defineBlocks({
     op: {
         init: function() {
             this.appendValueInput('OP1');
-            console.log(Object.entries(operators).map(([k,v])=>[v[0],k]))
             this.appendValueInput('OP2').appendField(new Blockly.FieldDropdown(
                 Object.entries(operators).map(([k,v])=>[v[0],k])), 'OPERATOR');
             this.setInputsInline(true)
@@ -56,6 +61,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Number');
         }
     },
     not: {
@@ -66,6 +72,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Number');
         }
     },
     set: {
@@ -213,17 +220,17 @@ generator.forBlock['channel_identifier'] = function (block) {
 generator.forBlock['variable_identifier'] = function(block) {
     return [`$${generator.getVariableName(block.getFieldValue('VARIABLE'))}`, Order.NONE];
 }
-generator.forBlock['number'] = function() {
+generator.forBlock['number'] = function(block) {
     return [block.getFieldValue('NUMBER'), Order.NONE];
 }
-generator.forBlock['time_since_trans'] = function() {
+generator.forBlock['time_since_trans'] = function(block) {
     return [statement("timeSinceTrans",false,[],[]), Order.NONE];
 }
-generator.forBlock['op'] = function() {
+generator.forBlock['op'] = function(block) {
     const op=operators[block.getFieldValue('OPERATOR')];
     return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[1]||op[0]} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
 }
-generator.forBlock['not'] = function() {
+generator.forBlock['not'] = function(block) {
     return [`!(${generator.valueToCode(block, 'VALUE', Order.ATOMIC)})`, Order.NONE];
 }
 
@@ -288,14 +295,14 @@ const propMap = {
     DASHCOUNT:[["Dashes"]],
     SPEED:[["Speed", "Length"],[]],
 };
-generator.forBlock['get_player'] = function() {
+generator.forBlock['get_player'] = function(block) {
     const args = propMap[block.getFieldValue('TYPE')];
 
     return [statement("getPlayer", false,
         args[0],
         args[1]||[]), Order.NONE];
 }
-generator.forBlock['kill_player'] = function() {
+generator.forBlock['kill_player'] = function(block) {
     const angle_dir = block.getFieldValue('DIR');
 
     return statement("killPlayer", true,
