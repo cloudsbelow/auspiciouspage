@@ -219,6 +219,7 @@ Blockly.common.defineBlocks({
 
 const Order = {
     ATOMIC: 0,
+    NONE:1
 };
 const generator = new Blockly.Generator('AuspiciousScript');
 function statement(name, nextLine, stringList, intList){
@@ -232,7 +233,7 @@ generator.forBlock['variable_identifier'] = function(block) {
     return [`$${generator.getVariableName(block.getFieldValue('VARIABLE'))}`, Order.NONE];
 }
 generator.forBlock['number'] = function(block) {
-    return [block.getFieldValue('NUMBER'), Order.NONE];
+    return [block.getFieldValue('NUMBER')+"", Order.NONE];
 }
 generator.forBlock['time_since_trans'] = function(block) {
     return [statement("timeSinceTrans",false,[],[]), Order.NONE];
@@ -247,7 +248,7 @@ generator.forBlock['not'] = function(block) {
 
 generator.forBlock['set'] = function(block) {
     return `${generator.valueToCode(block, 'TO_SET', Order.ATOMIC)} = ${
-        generator.valueToCode(block, 'VALUE', Order.ATOMIC)}`;
+        generator.valueToCode(block, 'VALUE', Order.ATOMIC)};`;
 }
 generator.forBlock['print'] = function(block, generator) {
     const values = [];
