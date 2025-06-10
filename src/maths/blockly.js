@@ -175,8 +175,8 @@ const Order = {
     ATOMIC: 0,
 };
 const generator = new Blockly.Generator('AuspiciousScript');
-function statement(name, semicolon, stringList, intList){
-    return `${name}${stringList.length>0?`<${stringList}>`:""}(${intList})${semicolon?";":""}`
+function statement(name, nextLine, stringList, intList){
+    return `${name}${stringList.length>0?`<${stringList}>`:""}(${intList})${!nextLine?"":";"}`
 }
 
 generator.forBlock['channel_identifier'] = function (block) {
@@ -271,7 +271,7 @@ generator.forBlock['kill_player'] = function() {
 }
 
 document.getElementById("compileButton").addEventListener("click", ()=>
-    document.getElementById("compiledText").textContent =generator.workspaceToCode(Blockly.getMainWorkspace()));
+    document.getElementById("compilerin").value =generator.workspaceToCode(Blockly.getMainWorkspace()));
 
 //--
 const toolbox = {
