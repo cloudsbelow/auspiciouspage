@@ -15,7 +15,7 @@ body {
     <p>Supported operations: 3-12 of <a href = "https://en.cppreference.com/w/c/language/operator_precedence">C operations</a> as well as ~!. The compiler also currently supports the max, min, clamp and take functions</p>
     <p>Mark channels with @. You can declare temporary variables with $. The controller will load all used channel variables prior to running your code. Accessing a channel after it has been written to returns the original value. The default behavior is to perform your operation in the entity's update step if one of the channels it is using has changed. This means you don't need to worry about loops, and indeed a line like @x=@x+1 will cause a channel to increment once per frame. RunImmediately will perform the operations immediately on update, making it possible to create an infinite loop. Be careful with it (like don't use it unless you know exactly what you are doing). Sorry, there may be bugs - (in other words, if something doesn't work throw a rock at my window and I'll try to fix it.)</p>
     <p>New: interop stuff! See list of functions below</p>
-    <div id="blocklyDiv" style="aspect-ratio: 5/3"></div>
+    <div id="blocklyDiv" style="height:500px;"></div>
     <span id="compileButton" style="padding:10px; display:inline-block;">To Code</span><br>
     <textarea id="compilerin" style="width:min(90%,800px);height:300px;">
       //example program

@@ -1,23 +1,23 @@
 //-- blocks
 const operators = [
-    ["+","add"],
-    ["-","sub"],
-    ["*","mult"],
-    ["/","div"],
-    ["==","eq"],
-    ["!=","ne"],
-    ["<=","le"],
-    [">=","ge"],
-    ["<","less"],
-    [">","greater"],
-    ["modulo","mod"],
-    ["left bitshift","lshift"],
-    ["right bitshift","rshift"],
-    ["bitwise and","and"],
-    ["bitwise xor","xor"],
-    ["bitwise or","or"],
-    ["logical and","land"],
-    ["logical or","lor"],
+    ["+"],
+    ["-"],
+    ["*"],
+    ["/"],
+    ["=="],
+    ["!="],
+    ["<="],
+    [">="],
+    ["<"],
+    [">"],
+    ["%", "modulo"],
+    ["<<", "left bitshift"],
+    [">>", "right bitshift"],
+    ["&", "bitwise and"],
+    ["^", "bitwise xor"],
+    ["|", "bitwise or"],
+    ["&&", "logical and"],
+    ["||", "logical or"],
 ];//todo: order of operations?
 
 Blockly.common.defineBlocks({
@@ -65,8 +65,7 @@ Blockly.common.defineBlocks({
         init: function() {
             this.appendValueInput('OP1');
             this.appendValueInput('OP2').appendField(new Blockly.FieldDropdown(
-                Object.entries(operators).map(([k,v])=>[v[0],k])), 'OPERATOR');
-            this.appendDummyInput('NAME').appendField('as int?').appendField(new Blockly.FieldCheckbox('FALSE'), 'INTFLAG')
+                Object.entries(operators).map(([k,v])=>[v[1]||v[0],k])), 'OPERATOR');
             this.setInputsInline(true)
             this.setOutput(true, null);
             this.setTooltip('');
@@ -206,7 +205,7 @@ Blockly.common.defineBlocks({
     },
     kill_player: {
         init: function() {
-            this.appendDummyInput('').appendField('kill player');
+            this.appendValueInput('KILL').appendField('kill player if');
             this.appendDummyInput('').appendField('custom direction?').appendField(new Blockly.FieldCheckbox('TRUE'), 'CUSTOMDIR').appendField(new FieldAngle(0), 'DIR');
             this.setPreviousStatement(true, null);
             this.setNextStatement(true, null);
@@ -223,7 +222,7 @@ const Order = {
 };
 const generator = new Blockly.Generator('AuspiciousScript');
 function statement(name, nextLine, stringList, intList){
-    return `${name}${stringList.length>0?`<${stringList}>`:""}(${intList})${!nextLine?"":";"}`
+    return `${name}${stringList.length>0?`<${stringList}>`:""}(${intList})${!nextLine?"":";\n"}`
 }
 
 generator.forBlock['channel_identifier'] = function (block) {
@@ -240,7 +239,7 @@ generator.forBlock['time_since_trans'] = function(block) {
 }
 generator.forBlock['op'] = function(block) {
     const op=operators[block.getFieldValue('OPERATOR')];
-    return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[1]+(block.getFieldValue('INTFLAG')=="TRUE"?"I":"")} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
+    return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[0]} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
 }
 generator.forBlock['not'] = function(block) {
     return [`!(${generator.valueToCode(block, 'VALUE', Order.ATOMIC)})`, Order.NONE];
@@ -248,7 +247,7 @@ generator.forBlock['not'] = function(block) {
 
 generator.forBlock['set'] = function(block) {
     return `${generator.valueToCode(block, 'TO_SET', Order.ATOMIC)} = ${
-        generator.valueToCode(block, 'VALUE', Order.ATOMIC)};`;
+        generator.valueToCode(block, 'VALUE', Order.ATOMIC)};\n`;
 }
 generator.forBlock['print'] = function(block, generator) {
     const values = [];
@@ -293,7 +292,7 @@ generator.forBlock['get_coremode'] = function(block) {
         [],
         []), Order.ATOMIC];
 }
-generator.forBlock['set_counter'] = function(block) {
+generator.forBlock['set_coremode'] = function(block) {
     return statement("setCoreMode", true,
         [],
         [generator.valueToCode(block, 'VALUE', Order.ATOMIC)]);
@@ -319,8 +318,8 @@ generator.forBlock['kill_player'] = function(block) {
 
     return statement("killPlayer", true,
         [],
-        block.getFieldValue('CUSTOMDIR')?
-            [Math.cos(angle_dir), Math.sin(angle_dir)] : []);
+        [generator.valueToCode(block, 'KILL', Order.ATOMIC), ...(block.getFieldValue('CUSTOMDIR')==="TRUE"?
+            [Math.cos(angle_dir), Math.sin(angle_dir)] : [])]);
 }
 
 document.getElementById("compileButton").addEventListener("click", ()=>
@@ -414,3 +413,8 @@ Blockly.Events.enable();
 generator.init(workspace);
 generator.nameDB_ = new Blockly.Names();
 generator.nameDB_.setVariableMap(workspace.getVariableMap());
+generator.scrub_ = (block, code, thisOnly = false) => {
+    const nextBlock = block.nextConnection && block.nextConnection.targetBlock();
+    const nextCode = thisOnly ? '' : generator.blockToCode(nextBlock);
+    return code + nextCode;
+}
