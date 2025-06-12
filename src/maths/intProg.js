@@ -1,5 +1,5 @@
 
-import { allreps, codes, InstrWrapper, JumpPoint, JumpTargetWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, StringWrapper, TOK, TOKRE } from "./intLib.js"
+import { allreps, codes, enums, ImmUintWrapper, InstrWrapper, JumpPoint, JumpTargetWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, StringWrapper, TOK, TOKRE, ValueWrapper } from "./intLib.js"
 
 class Stack extends Array{peek(){return this[this.length-1]}empty(){return this.length==0};}
 
@@ -37,7 +37,7 @@ class Scope{
     return this.parent?.usevar(v)
   }
   getreg(v){
-    return this.vars[v]??this.parent.getreg(v);
+    return this.vars[v]?.reg??this.parent.getreg(v);
   }
 }
 class Ctrlword{
@@ -94,7 +94,7 @@ Scope.prototype.assignReg = function(offset){
   let o=offset;
   let s = new Stack()
   for(let i=0; i<n; i++){
-    starts[i].forEach(r=>r.reg=s.pop()??(o++))
+    starts[i].forEach(r=>r.reg=s.pop()??(new RegWrapper(o++)))
     ends[i].forEach(r=>s.push(r.reg));
   }
   for(const p of this.items) if(p instanceof Scope) p.assignReg(o);
@@ -178,10 +178,11 @@ Scope.prototype.compileLine = function(instr, targetRegs, command, fitsIm){
     let s=gsm(m);
     let reg=regs[m];
     if(s?.t===1)reg = this.getreg(s.expr);
-    //console.log([reg,(s?.t===0 && fitsIm(s.c))?s.c:null],m,s);
+    if(s==undefined) reg=this.getreg(m)
     return [reg,(s?.t===0 && fitsIm(s.c))?s.c:null]
   }
-  const last = queue.pop();
+  //console.log(command,queue)
+  let last = queue.pop();
   queue.forEach((x,i)=>{
     const s=t[x];
     const reg = freed.pop()??new RegWrapper(o++);
@@ -192,13 +193,19 @@ Scope.prototype.compileLine = function(instr, targetRegs, command, fitsIm){
       regs[m]=null;
     });
   })
-  const s=t[last];
-  const reg = targetRegs[0]??new RegWrapper(o);
-  orderOfOps[s.t].mkinstrs(s,reg,toktoreg,instr);
+  let reg;
+  if(last!=undefined){
+    const s=t[last];
+    reg = targetRegs[0]??new RegWrapper(o);
+    orderOfOps[s.t].mkinstrs(s,reg,toktoreg,instr);
+  } else {
+    if(command.match(/\$\w+/)) reg=this.getreg(command);
+    else throw new Error(`could not compile ${command}`);
+  }
   for(let i=1; i<targetRegs; i++){
     instr.push([new InstrWrapper("copy"),targetRegs[i],reg])
   }
-  return out;
+  return reg;
 }
 Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
   let start = new JumpTargetWrapper(`scope begin ${this.type}`);
@@ -230,12 +237,12 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
       let targs =[]
       let chset =[]
       for(let j=0; j<l.length-1; j++){
-        if(l[j][0]=='$')targs.push(new RegWrapper(this.vars[l[j]].reg));
+        if(l[j][0]=='$')targs.push(this.getreg(l[j]));
         if(l[j][0]=='@')chset.push(l[j]);
       } 
       const reg = this.compileLine(instrs, targs, l[l.length-1],fitsim)
       chset.forEach(x=>{
-        instrs.push([codes.storeChannel,reg,x.length-1,new StringWrapper(x.substring(1))])
+        instrs.push([codes.storeChannel,reg,new ImmUintWrapper(x.length-1),new StringWrapper(x.substring(1))])
       })
       if(i==0 && (this.type=='if'||this.type=='while')){
         instrs.push([codes.jz, reg, end.jump()])
@@ -311,9 +318,10 @@ class IntProg{
         x.forEach(fill)
       } else throw Error(`Bad! not a value wrapper ${x}`)
     }
-    let dat = this.main.compile([],(n)=>n<1<<(bits-1) && n>=-(1<<(bits-1)))
-    console.log(this.lastComp = dat);
-    fill(dat)
+    let instrs =[]
+    this.main.compile(instrs,(n)=>n<1<<(bits-1) && n>=-(1<<(bits-1)))
+    console.log(this.lastComp = instrs);
+    fill(instrs)
     toFix.forEach(x=>x.arrFix(arr,bits))
     let highCheck=(1<<bits)-1
     let lowCheck=0
@@ -321,7 +329,7 @@ class IntProg{
     return arr;
   }
   getreg(v){
-    return this.using[v]
+    return new RegWrapper(this.using[v])
   }
 }
 
@@ -329,3 +337,4 @@ class IntProg{
 window.IntProg = IntProg;
 window.Stack = Stack;
 window.ctrlwrod = Ctrlword
+window.enums = enums

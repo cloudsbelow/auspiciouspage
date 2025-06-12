@@ -65,7 +65,7 @@ JumpPoint.prototype.arrAppend = function(arr, bits=8){
 }
 JumpPoint.prototype.arrFix = function(arr, bits=8){
   if(bits == 8 && this._fof!==undefined){
-    const v = new DataView(new Uint32Array([this.v._fof]).buffer)
+    const v = new DataView(new Uint32Array([this.v.loc]).buffer)
     for(let i=0; i<4; i++)arr[this._fof+i] = v.getUint8(i);
   }
   else throw Error();
@@ -88,12 +88,12 @@ InstrWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
     let v = codes_[this.v];
     if(v===undefined) throw new Error("No code "+this.v);
-    arr.push(new DataView(v));
+    arr.push(v);
   }
   else throw Error();
 }
 
-const enums=`
+export const enums=`
     noop, loadZero, loadI, loadImmediateInt, loadChannel, storeChannel, copy,
     startAccInit0, startAccInit1, startAccInitImm, startAccInitReg, startAcc, finishAcc,
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
@@ -159,7 +159,7 @@ const doSimpleAccToks = (op,toks,reg,fn,instrs)=>{
   for(let i=1; i<toks.length; i++){
     addMaybeImmInstr(fn(toks[i]),op,narr);
   }
-  narr.push([codes.finishAcc,new reg]);
+  narr.push([codes.finishAcc,reg]);
 }
 /**
  * @param {*} op Operation to perform
@@ -386,7 +386,6 @@ for(let i=orderOfOps.length-1; i>=0; i--){
   ops.rep?.forEach(x=>allreps.push(x));
   ops.t=i;
 }
-
 
 
 
