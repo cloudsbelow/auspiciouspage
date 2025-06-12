@@ -13,11 +13,15 @@ class Scope{
     if(this.entry == "else"){
       this.type = "else"; return;
     }
+    if(this.entry == "loop"){
+      this.type = "loop"; return;
+    }
     let match = this.entry.match(/^(\w*)\((.+)\)$/)
     if(match == null) throw new Error(`improper loop clause ${this.entry}`);
     let [all, type, inner] = match;
+    if(type=="elif") type="elseif";
     this.type = type;
-    if(type!="if"&&type!="while") throw new Error(`Unknown block type ${type}`);
+    if(type!="if"&&type!="while"&&type!="elseif") throw new Error(`Unknown block type ${type}`);
     this.items.push(inner);
   }
   add(item){
@@ -213,23 +217,27 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
   let start = new JumpTargetWrapper(`scope begin ${this.type}`);
   let end = new JumpTargetWrapper(`scope end ${this.type}`);
   instrs.push(start);
-  if(this.type=='else'){
-    instrs.push([codes.j,end.jump(),iftarg])
+  if(this.type=='else'||this.type=='elseif'){
+    instrs.push([codes.j,iftarg[1].jump(),iftarg[0]])
   }
+  let innerift=null;
   for(let i=0; i<this.items.length; i++){
     const l = this.items[i];
     if(l instanceof Scope){
       const ni = [];
       let iftarg=null;
-      if(l.type == 'else'){
-        if(this.items[i-1]?.type!='if') throw Error(`else must follow if`);
-        iftarg = instrs[instrs.length-1].pop();
+      if(l.type == 'else' || l.type=='elseif'){
+        const ptype = this.items[i-1]?.type
+        if(ptype!='elseif' && ptype!='if') throw Error(`else must follow if`);
+        if(ptype == 'if')innerift = [instrs[instrs.length-1].pop(), new JumpTargetWrapper("chained else exit")];
+        else innerift[0] = instrs[instrs.length-1].pop()
       }
       instrs.push(ni);
-      l.compile(ni,fitsim,iftarg)
+      l.compile(ni,fitsim,innerift)
     } else if(l instanceof Ctrlword){
-      if(l.word == 'return' || l.word == 'exit') instrs.push(codes.exit);
-      else if((l.type == 'while'||l.type == 'if') && i==0) throw Error("bad loop condition")
+      if((this.type == 'while'||this.type == 'if'||this.type=='elseif') && i==0){
+        throw Error(`bad condition in ${this.type} of ${l.word}}`)
+      } else if(l.word == 'return' || l.word == 'exit') instrs.push(codes.exit);
       else if(l.word == 'continue' || l.word=='break'){
         if(this.type == 'while' || this.type =='loop'){
           instrs.push([codes.j,(l.word=='continue'?start:end).jump()]);
@@ -252,6 +260,7 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
     }
   }
   if(this.type=='while'||this.type=='loop')instrs.push([codes.j, start.jump()]);
+  if(this.type=='else')instrs.push(iftarg[1])
   instrs.push(end);
 }
 
@@ -301,7 +310,7 @@ class IntProg{
       }
       cur+=c;
     }
-    if(s.length!=1||cur!=""||!un.empty()) throw new Error(`Invalid program-${s.length-1} unclosed scopes`);
+    if(s.length!=1||cur!=""||!un.empty()) throw new Error(`Invalid program-${s.length-1} unclosed scopes or unfinished last line ${cur}`);
     const scope = this.main = s.pop();
     scope.build(this)
     scope.assignReg(this.usingctr)
