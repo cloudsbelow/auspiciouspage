@@ -213,9 +213,16 @@ Scope.prototype.compileLine = function(instr, targetRegs, command, fitsIm){
   }
   return reg;
 }
+Scope.prototype.getLoopEnd = function(word){
+  if(this.type =='while'||this.type=='loop'){
+    return word=='continue'?this.lstart:this.lend;
+  }
+  if(this.parent==null)throw new Error(`cannot use ${l.word} outside loop`);
+  return this.parent.getLoopEnd(word);
+}
 Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
-  let start = new JumpTargetWrapper(`scope begin ${this.type}`);
-  let end = new JumpTargetWrapper(`scope end ${this.type}`);
+  let start = this.lstart = new JumpTargetWrapper(`scope begin ${this.type}`);
+  let end = this.lend = new JumpTargetWrapper(`scope end ${this.type}`);
   instrs.push(start);
   if(this.type=='else'||this.type=='elseif'){
     instrs.push([codes.j,iftarg[1].jump(),iftarg[0]])
@@ -238,11 +245,8 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
       if((this.type == 'while'||this.type == 'if'||this.type=='elseif') && i==0){
         throw Error(`bad condition in ${this.type} of ${l.word}}`)
       } else if(l.word == 'return' || l.word == 'exit') instrs.push(codes.exit);
-      else if(l.word == 'continue' || l.word=='break'){
-        if(this.type == 'while' || this.type =='loop'){
-          instrs.push([codes.j,(l.word=='continue'?start:end).jump()]);
-        } else throw new Error(`cannot use ${l.word} in ${this.type}`);
-      }
+      else if(l.word == 'continue' || l.word=='break')instrs.push([codes.j,this.getLoopEnd(l.word).jump()]);
+      else throw new Error(`Unknown`)
     } else {
       let targs =[]
       let chset =[]
@@ -261,7 +265,7 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
   }
   if(this.type=='while'||this.type=='loop')instrs.push([codes.j, start.jump()]);
   if(this.type=='else')instrs.push(iftarg[1])
-  instrs.push(end);
+  instrs.push(end); delete this.lstart; delete this.lend;
 }
 
 
