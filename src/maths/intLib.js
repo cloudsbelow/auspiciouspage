@@ -75,7 +75,7 @@ RegWrapper.prototype = Object.create(ValueWrapper.prototype);
 RegWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
     let varr = new Uint8Array([this.v]);
-    if(this.v != varr[0]) throw Error("Invalid register "+this.v);
+    if(this.v != varr[0]) throw Error("Invalid register "+this.v+" (255 is the maximum register number for now)");
     arr.push(new DataView(varr.buffer).getUint8(0));
   }
   else throw Error();

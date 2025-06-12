@@ -1,5 +1,5 @@
 
-import { allreps, codes, enums, ImmUintWrapper, InstrWrapper, JumpPoint, JumpTargetWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, StringWrapper, TOK, TOKRE, ValueWrapper } from "./intLib.js"
+import { allreps, b_cc, codes, enums, ImmUintWrapper, InstrWrapper, JumpPoint, JumpTargetWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, StringWrapper, toB64, TOK, TOKRE, ValueWrapper } from "./intLib.js"
 
 class Stack extends Array{peek(){return this[this.length-1]}empty(){return this.length==0};}
 
@@ -194,15 +194,17 @@ Scope.prototype.compileLine = function(instr, targetRegs, command, fitsIm){
     });
   })
   let reg;
+  let firsttarg=1
   if(last!=undefined){
     const s=t[last];
     reg = targetRegs[0]??new RegWrapper(o);
     orderOfOps[s.t].mkinstrs(s,reg,toktoreg,instr);
   } else {
-    if(command.match(/\$\w+/)) reg=this.getreg(command);
+    if(this.getreg(command)!=null) reg=this.getreg(command);
     else throw new Error(`could not compile ${command}`);
+    firsttarg=0
   }
-  for(let i=1; i<targetRegs; i++){
+  for(let i=firsttarg; i<targetRegs.length; i++){
     instr.push([new InstrWrapper("copy"),targetRegs[i],reg])
   }
   return reg;
@@ -249,6 +251,7 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
       }
     }
   }
+  if(this.type=='while'||this.type=='loop')instrs.push([codes.j, start.jump()]);
   instrs.push(end);
 }
 
@@ -310,10 +313,12 @@ class IntProg{
   compile(bits=8){
     const arr = []
     const toFix=[]
+    let highreg = this.usingctr;
     const fill = (x)=>{
       if(x instanceof ValueWrapper){
         x.arrAppend(arr,bits)
         if(x instanceof JumpPoint) toFix.push(x);
+        if(x instanceof RegWrapper) highreg=Math.max(highreg,x.v)
       } else if(x instanceof Array) {
         x.forEach(fill)
       } else throw Error(`Bad! not a value wrapper ${x}`)
@@ -323,10 +328,10 @@ class IntProg{
     console.log(this.lastComp = instrs);
     fill(instrs)
     toFix.forEach(x=>x.arrFix(arr,bits))
-    let highCheck=(1<<bits)-1
-    let lowCheck=0
-    arr.forEach(x=>{if(x>highCheck||x<lowCheck)throw Error()});
-    return arr;
+    arr.forEach(x=>{if(x>((1<<bits)-1)||x<0)throw Error()});
+    if(bits == 8){
+      return [new Uint8Array(arr),highreg+1]
+    }
   }
   getreg(v){
     return new RegWrapper(this.using[v])
@@ -334,7 +339,28 @@ class IntProg{
 }
 
 
+const pcomp=(ex, bits=8)=>{
+  let a = window.lastprog = new IntProg(ex);
+  let b=a.compile(8);
+  const using = []
+  for(const [ch, reg] of Object.entries(a.using)) using[reg]=ch
+  let header = new Uint16Array([1,using.length,b[1],0])
+  let c=[header, new Uint32Array([b[0].byteLength])]
+  let offset = 12;
+  using.forEach(x=>{
+    x=x.substring(1)
+    c.push(new Uint8Array([x.length]));
+    let d=new TextEncoder().encode(x);
+    if(d.byteLength != x.length || x.length>(1<<bits)-1) throw Error("bad channel name: "+x);
+    c.push(d)
+    offset+=1+x.length;
+  })
+  c.push(b[0])
+  header[3]=offset;
+  console.log(c);
+  return toB64(b_cc(...c));
+}
+window.pcomp = pcomp;
 window.IntProg = IntProg;
-window.Stack = Stack;
-window.ctrlwrod = Ctrlword
 window.enums = enums
+window.b_cc = b_cc
