@@ -1,5 +1,5 @@
 
-import { allreps, InstrWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, TOK, TOKRE } from "./intLib.js"
+import { allreps, codes, InstrWrapper, JumpPoint, JumpTargetWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, StringWrapper, TOK, TOKRE } from "./intLib.js"
 
 class Stack extends Array{peek(){return this[this.length-1]}empty(){return this.length==0};}
 
@@ -40,6 +40,11 @@ class Scope{
     return this.vars[v]??this.parent.getreg(v);
   }
 }
+class Ctrlword{
+  constructor(word){this.word=word}
+  static words = new Set(["continue","break","return","yield","exit"]);
+}
+
 Scope.prototype.build = function(ctx){
   this.i=0;
   const nitems = [];
@@ -48,6 +53,10 @@ Scope.prototype.build = function(ctx){
     if(p instanceof Scope){
       this.i = nitems.push(p); continue;
     }
+    if(Ctrlword.words.has(p)){
+      nitems.push(new Ctrlword(p)); continue;
+    }
+
     let ph =p.match(/[^=]+(?=\=|$)/g)
     if(ph==null) throw new Error(`invalid line ${p}`);
     for(let i=0; i<ph.length-1; i++){
@@ -64,6 +73,7 @@ Scope.prototype.build = function(ctx){
     if(p instanceof Scope){
       p.build(ctx)
     } else {
+      if(p instanceof Ctrlword) continue;
       const rv = p[p.length-1];
       rv.match(/\$\w+/g)?.forEach((v)=>{
         if(!this.usevar(v)) throw new Error(`use of undeclared variable ${v}`)
@@ -168,7 +178,7 @@ Scope.prototype.compileLine = function(instr, targetRegs, command, fitsIm){
     let s=gsm(m);
     let reg=regs[m];
     if(s?.t===1)reg = this.getreg(s.expr);
-    console.log([reg,(s?.t===0 && fitsIm(s.c))?s.c:null],m,s);
+    //console.log([reg,(s?.t===0 && fitsIm(s.c))?s.c:null],m,s);
     return [reg,(s?.t===0 && fitsIm(s.c))?s.c:null]
   }
   const last = queue.pop();
@@ -183,15 +193,57 @@ Scope.prototype.compileLine = function(instr, targetRegs, command, fitsIm){
     });
   })
   const s=t[last];
-  const reg = targetRegs[0]??o;
+  const reg = targetRegs[0]??new RegWrapper(o);
   orderOfOps[s.t].mkinstrs(s,reg,toktoreg,instr);
   for(let i=1; i<targetRegs; i++){
     instr.push([new InstrWrapper("copy"),targetRegs[i],reg])
   }
   return out;
 }
-Scope.prototype.compile = function(instrs, fitsim){
-  this.compileLine(instrs,[0],this.items[0][this.items[0].length-1],fitsim)
+Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
+  let start = new JumpTargetWrapper(`scope begin ${this.type}`);
+  let end = new JumpTargetWrapper(`scope end ${this.type}`);
+  instrs.push(start);
+  if(this.type=='else'){
+    instrs.push([codes.j,end.jump(),iftarg])
+  }
+  for(let i=0; i<this.items.length; i++){
+    const l = this.items[i];
+    if(l instanceof Scope){
+      const ni = [];
+      let iftarg=null;
+      if(l.type == 'else'){
+        if(this.items[i-1]?.type!='if') throw Error(`else must follow if`);
+        iftarg = instrs[instrs.length-1].pop();
+      }
+      instrs.push(ni);
+      l.compile(ni,fitsim,iftarg)
+    } else if(l instanceof Ctrlword){
+      if(l.word == 'return' || l.word == 'exit') instrs.push(codes.exit);
+      else if((l.type == 'while'||l.type == 'if') && i==0) throw Error("bad loop condition")
+      else if(l.word == 'continue' || l.word=='break'){
+        if(this.type == 'while' || this.type =='loop'){
+          instrs.push([codes.j,(l.word=='continue'?start:end).jump()]);
+        } else throw new Error(`cannot use ${l.word} in ${this.type}`);
+      }
+    } else {
+      let targs =[]
+      let chset =[]
+      for(let j=0; j<l.length-1; j++){
+        if(l[j][0]=='$')targs.push(new RegWrapper(this.vars[l[j]].reg));
+        if(l[j][0]=='@')chset.push(l[j]);
+      } 
+      const reg = this.compileLine(instrs, targs, l[l.length-1],fitsim)
+      chset.forEach(x=>{
+        instrs.push([codes.storeChannel,reg,x.length-1,new StringWrapper(x.substring(1))])
+      })
+      if(i==0 && (this.type=='if'||this.type=='while')){
+        instr.push([codes.jz, reg, end.jump()])
+      }
+    }
+  }
+  instrs.push(end);
+  console.log(instrs)
 }
 
 
@@ -216,19 +268,19 @@ class IntProg{
     for(let idx=0; idx<str.length; idx++){
       const c = str[idx];
       if(c=="}"){
-        if(cur!="" || !un.empty()) throw new Error("invalid program");
+        if(cur!="" || !un.empty()) throw new Error(`Incomplete line ${cur} before }`);
         const top = s.pop()
         s.peek().add(top);
         continue
       } 
       if(c == ";"){
-        if(!un.empty()) throw new Error("invalid program");
+        if(!un.empty()) throw new Error(`Unbalanced brackets before ; at ${cur}`);
         if(s.peek().add(cur));
         cur="";
         continue;
       }
       if(c == "{"){
-        if(!un.empty()) throw new Error("invalid program");
+        if(!un.empty()) throw new Error(`Unbalanced brackets before { at ${cur}`);
         s.push(new Scope(cur,s.peek()));
         cur = "";
         continue;
@@ -236,11 +288,11 @@ class IntProg{
       if(escmap[c]!==undefined){
         un.push(escmap[c]);
       }else if(closechars.has(c)){
-        if(un.pop()!=c) throw new Error("invalid program");
+        if(un.pop()!=c) throw new Error(`Invalid program- asymetric closing brace ${c} after ${cur}`);
       }
       cur+=c;
     }
-    if(s.length!=1||cur!=""||!un.empty()) throw new Error("invalid program");
+    if(s.length!=1||cur!=""||!un.empty()) throw new Error(`Invalid program-${s.length-1} unclosed scopes`);
     const scope = this.main = s.pop();
     scope.build(this)
     scope.assignReg(this.usingctr)
@@ -260,3 +312,4 @@ class IntProg{
 
 window.IntProg = IntProg;
 window.Stack = Stack;
+window.ctrlwrod = Ctrlword

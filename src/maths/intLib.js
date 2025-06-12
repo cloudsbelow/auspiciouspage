@@ -45,6 +45,9 @@ ImmUintWrapper.prototype.arrAppend = function(arr, bits=8){
 }
 export const JumpTargetWrapper = function(name){ValueWrapper.call(this, name)}
 JumpTargetWrapper.prototype = Object.create(ValueWrapper.prototype);
+JumpTargetWrapper.prototype.jump = function(){
+  return new JumpPoint(this)
+}
 export const JumpPoint = function(target){ValueWrapper.call(this, target)}
 JumpPoint.prototype = Object.create(ValueWrapper.prototype);
 export const RegWrapper = function(reg){ValueWrapper.call(this, reg)}
@@ -76,9 +79,9 @@ const enums=`
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
     multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
-    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, wait
+    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, exit
 `.replaceAll(/\s/g,"").split(",")
-const codes = new Proxy(codes_,{
+export const codes = new Proxy(codes_,{
   get:(targ, p, rec)=>{
     let v = targ[p];
     if(v===undefined) console.error("No code "+p);
