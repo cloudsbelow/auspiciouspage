@@ -10,6 +10,9 @@ export const MAXDEPTH = 2000;
 export const ValueWrapper = function(v){this.v=v}
 Object.setPrototypeOf(ValueWrapper.prototype,null)
 ValueWrapper.prototype.valueOf = ()=>0
+ValueWrapper.prototype.arrAppend = function(arr, bits){
+  throw new Error("not implemented")
+}
 export const StringWrapper = function(v){ValueWrapper.call(this,v)}
 StringWrapper.prototype=Object.create(ValueWrapper.prototype)
 StringWrapper.prototype.arrAppend = function(arr,bits=8){
@@ -48,8 +51,25 @@ JumpTargetWrapper.prototype = Object.create(ValueWrapper.prototype);
 JumpTargetWrapper.prototype.jump = function(){
   return new JumpPoint(this)
 }
+JumpTargetWrapper.prototype.arrAppend = function(arr,bits=8){
+  this.loc = arr.length;
+}
 export const JumpPoint = function(target){ValueWrapper.call(this, target)}
 JumpPoint.prototype = Object.create(ValueWrapper.prototype);
+JumpPoint.prototype.arrAppend = function(arr, bits=8){
+  if(this._fof === undefined){
+    this._fof = arr.length;
+  } else throw Error("the same jump point is used in multiple places")
+  if(bits == 8)for(let i=0; i<4; i++)arr.push(-1);
+  else throw Error();
+}
+JumpPoint.prototype.arrFix = function(arr, bits=8){
+  if(bits == 8 && this._fof!==undefined){
+    const v = new DataView(new Uint32Array([this.v._fof]).buffer)
+    for(let i=0; i<4; i++)arr[this._fof+i] = v.getUint8(i);
+  }
+  else throw Error();
+}
 export const RegWrapper = function(reg){ValueWrapper.call(this, reg)}
 RegWrapper.prototype = Object.create(ValueWrapper.prototype);
 RegWrapper.prototype.arrAppend = function(arr, bits=8){
@@ -66,8 +86,8 @@ export const InstrWrapper = function(instr){ValueWrapper.call(this, instr)}
 InstrWrapper.prototype = Object.create(ValueWrapper.prototype);
 InstrWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
-    let v = codes_[p];
-    if(v===undefined) throw new Error("No code "+p);
+    let v = codes_[this.v];
+    if(v===undefined) throw new Error("No code "+this.v);
     arr.push(new DataView(v));
   }
   else throw Error();

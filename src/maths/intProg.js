@@ -243,7 +243,6 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
     }
   }
   instrs.push(end);
-  console.log(instrs)
 }
 
 
@@ -302,7 +301,24 @@ class IntProg{
     this.using[ch]??=this.usingctr++
   }
   compile(bits=8){
-    this.main.compile([],(n)=>n<1<<(bits-1) && n>=-(1<<(bits-1)))
+    const arr = []
+    const toFix=[]
+    const fill = (x)=>{
+      if(x instanceof ValueWrapper){
+        x.arrAppend(arr,bits)
+        if(x instanceof JumpPoint) toFix.push(x);
+      } else if(x instanceof Array) {
+        x.forEach(fill)
+      } else throw Error(`Bad! not a value wrapper ${x}`)
+    }
+    let dat = this.main.compile([],(n)=>n<1<<(bits-1) && n>=-(1<<(bits-1)))
+    console.log(this.lastComp = dat);
+    fill(dat)
+    toFix.forEach(x=>x.arrFix(arr,bits))
+    let highCheck=(1<<bits)-1
+    let lowCheck=0
+    arr.forEach(x=>{if(x>highCheck||x<lowCheck)throw Error()});
+    return arr;
   }
   getreg(v){
     return this.using[v]
