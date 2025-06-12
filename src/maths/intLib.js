@@ -99,7 +99,7 @@ export const enums=`
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
     multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
-    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, exit
+    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit
 `.replaceAll(/\s/g,"").split(",")
 export const codes = new Proxy(codes_,{
   get:(targ, p, rec)=>{
@@ -210,6 +210,12 @@ const pfuncs={
       addMaybeImmInstr(fn(toks[1]),"max",instrs)
       addMaybeImmInstr(fn(toks[2]),"min",instrs)
       instrs.push([codes.finishAcc,reg])
+    },
+    canimm:true
+  },
+  wait:{
+    mkinstrs:(toks,reg,fn,instrs)=>{
+      addMaybeImmInstr(fn(toks[0]),"yield",instrs)
     },
     canimm:true
   }
