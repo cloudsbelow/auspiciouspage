@@ -1,34 +1,29 @@
-//code for 'compiling' simple mathematical statements
-
-
-const TOK = '([#$]\\w+)'; //([@#%]\w+|&#?\w+&#?\w+)
-const TOKRE = new RegExp(TOK,'g');
+export const TOK = '([#$]\\w+)'; //([@#%]\w+|&#?\w+&#?\w+)
+export const TOKRE = new RegExp(TOK,'g');
 //const PARENRE = new RegExp(`[a-z]*\\(${TOK}(,${TOK})*\\)`,'g')
-const PARENRE = new RegExp(
+export const PARENRE = new RegExp(
   '(?:[a-zA-Z_][\\w]*(?:\\<[A-Za-z_]\\w*(?:\\,*[A-Za-z_]\\w*)*\\>)?)?'+
   `\\((${TOK}(,${TOK})*)?\\)`, 'g'
 )
-const MAXDEPTH = 2000;
+export const MAXDEPTH = 2000;
 
-const HPTOK = '!T!'
-
-const ValueWrapper = function(v){this.v=v}
+export const ValueWrapper = function(v){this.v=v}
 Object.setPrototypeOf(ValueWrapper.prototype,null)
 ValueWrapper.prototype.valueOf = ()=>0
-const StringWrapper = function(v){ValueWrapper.call(this,v)}
+export const StringWrapper = function(v){ValueWrapper.call(this,v)}
 StringWrapper.prototype=Object.create(ValueWrapper.prototype)
 StringWrapper.prototype.arrAppend = function(arr,bits=8){
   if(bits == 8) for(let i=0; i<this.v.length; i++)arr.push(this.v.charCodeAt(i));
   else throw Error();
 }
-const IntWrapper = function(v){ValueWrapper.call(this,v)}
+export const IntWrapper = function(v){ValueWrapper.call(this,v)}
 IntWrapper.prototype = Object.create(ValueWrapper.prototype);
 IntWrapper.prototype.arrAppend = function(arr, bits=8){
   const v = new DataView(new Int32Array([this.v]).buffer)
   if(bits == 8) for(let i=0; i<4; i++)arr.push(v.getUint8(i));
   else throw Error();
 }
-const ImmIntWrapper = function(v){ValueWrapper.call(this,v)}
+export const ImmIntWrapper = function(v){ValueWrapper.call(this,v)}
 ImmIntWrapper.prototype = Object.create(ValueWrapper.prototype);
 ImmIntWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
@@ -38,7 +33,7 @@ ImmIntWrapper.prototype.arrAppend = function(arr, bits=8){
   }
   else throw Error();
 }
-const ImmUintWrapper = function(v){ValueWrapper.call(this,v)}
+export const ImmUintWrapper = function(v){ValueWrapper.call(this,v)}
 ImmUintWrapper.prototype = Object.create(ValueWrapper.prototype);
 ImmUintWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
@@ -48,11 +43,11 @@ ImmUintWrapper.prototype.arrAppend = function(arr, bits=8){
   }
   else throw Error();
 }
-const JumpTargetWrapper = function(name){ValueWrapper.call(name)}
+export const JumpTargetWrapper = function(name){ValueWrapper.call(name)}
 JumpTargetWrapper.prototype = Object.create(ValueWrapper.prototype);
-const JumpPoint = function(target){ValueWrapper.call(target)}
+export const JumpPoint = function(target){ValueWrapper.call(target)}
 JumpPoint.prototype = Object.create(ValueWrapper.prototype);
-const RegWrapper = function(reg){ValueWrapper.call(reg)}
+export const RegWrapper = function(reg){ValueWrapper.call(reg)}
 RegWrapper.prototype = Object.create(ValueWrapper.prototype);
 RegWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
@@ -63,15 +58,26 @@ RegWrapper.prototype.arrAppend = function(arr, bits=8){
   else throw Error();
 }
 
+const codes_ = {}
+export const InstrWrapper = function(instr){ValueWrapper.call(instr)}
+InstrWrapper.prototype = Object.create(ValueWrapper.prototype);
+InstrWrapper.prototype.arrAppend = function(arr, bits=8){
+  if(bits == 8){
+    let v = codes_[p];
+    if(v===undefined) throw new Error("No code "+p);
+    arr.push(new DataView(v));
+  }
+  else throw Error();
+}
+
 const enums=`
     noop, loadZero, loadI, loadImmediateInt, loadChannel, storeChannel, copy,
     startAccInit0, startAccInit1, startAccInitImm, startAccInitReg, startAcc, finishAcc,
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
     multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
-    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi
+    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, wait
 `.replaceAll(/\s/g,"").split(",")
-const codes_ = {}
 const codes = new Proxy(codes_,{
   get:(targ, p, rec)=>{
     let v = targ[p];
@@ -89,6 +95,10 @@ function post(delimiters){
 }
 let delimiters = ","
 
+/**
+ * @param {*} first Tuple containing register/immidiate if it exists
+ * @param {Array} instrs Instruction array to append to
+ */
 const startMaybeImmAcc = (first,instrs)=>{
   if(first[1]!==null)instrs.push([codes.startAccInitImm,new ImmIntWrapper(first[1])]);
   else{
@@ -96,6 +106,11 @@ const startMaybeImmAcc = (first,instrs)=>{
     instrs.push([codes.startAccInitReg,first[0]]);
   }
 }
+/**
+ * @param {*} tuple Tuple containing register/immidiate if it exists
+ * @param {*} op Opcode to add
+ * @param {*} instrs Instruction array to append to
+ */
 const addMaybeImmInstr = (tuple, op, instrs)=>{
   if(tuple[1]!==null) instrs.push([codes[op+"I"],new ImmIntWrapper(tuple[1])]);
   else{
@@ -108,6 +123,13 @@ const doSimpleAcc = (op,s,reg,fn,instrs)=>{
   const v=s.expr;let toks = v.match(TOKRE);
   doSimpleAccToks(op,toks,reg,fn,instrs)
 }
+/**
+ * @param {*} op Operation to accumulate
+ * @param {*} toks Tokens to parse
+ * @param {*} reg The out register
+ * @param {*} fn Function to generate register/immidiate tuple
+ * @param {*} instrs Instruction array to append to
+ */
 const doSimpleAccToks = (op,toks,reg,fn,instrs)=>{
   let narr = []; instrs.push(narr)
   startMaybeImmAcc(fn(toks[0]),narr);
@@ -116,6 +138,14 @@ const doSimpleAccToks = (op,toks,reg,fn,instrs)=>{
   }
   narr.push([codes.finishAcc,new reg]);
 }
+/**
+ * @param {*} op Operation to perform
+ * @param {*} reg Output register
+ * @param {*} first Fist value to use
+ * @param {*} second Second value to use
+ * @param {*} instrs Instruction array to append to
+ * @param {*} swapped Internal - leave empty
+ */
 const simpleImmSwap = (op, reg, first, second, instrs, swapped=0)=>{
   if(swapped>2) throw Error("bad");
   if(first[1]!==null)simpleImmSwap(op,reg,second,first,instrs,swapped++);
@@ -123,6 +153,9 @@ const simpleImmSwap = (op, reg, first, second, instrs, swapped=0)=>{
   else instrs.push([codes[op+"I"],reg,first[0],new ImmIntWrapper(second[1])])
 }
 
+/**
+ * Compiled parenthetical instructions. 
+ */
 const pfuncs={
   max:{
     pconst:(v,a)=>v.match(TOKRE).reduce((x,y)=>Math.max(x,a.gsm(y).c),-Infinity),
@@ -322,9 +355,7 @@ const orderOfOps=[{
     mkinstrs:doSimpleAcc.bind(null,"lor"),
   },
 ]
-
-
-const allreps=[]
+export const allreps=[]
 for(let i=orderOfOps.length-1; i>=0; i--){
   const ops = orderOfOps[i];
   if(!ops.re) ops.re = new RegExp(prior(delimiters)+ops.remid+post(delimiters),'g');
@@ -333,72 +364,33 @@ for(let i=orderOfOps.length-1; i>=0; i--){
   ops.t=i;
 }
 
-function keyIntersect(...o){
-  const idx = Object.keys(o[0]).length<Object.keys(o[1]).length?1:0;
-  const res = {}
-  Object.keys(o[1-idx]).forEach((key)=>{
-    if(o[idx][key] !== undefined) res[key] = true
-  })
-  return res
-}
 
-
-
-class IntEx{
-  constructor(text){
-    this.symmap={}
-    this.microt = {} 
-    this.macrot = {}
-    this.using = []
-    this.emitting = []
-    this.symcounter = 0
-
-    const lines = text.replaceAll(/\/\/.*$/gm,"").match(/(^|(?<=\;))[^;]*\w[^;]*(?=;)/gm).map(s=>{
-      let str = s.replaceAll(/\s/g,"")
-      for(let [sub, tok] of allreps){
-        str = str.replaceAll(sub, tok);
-      }
-      return str;
-    })
-    console.log(lines)
-    lines.map(str=>str.split('=')).forEach(([sym,f])=>{
-      this.addline(f&&sym, f??sym)
-    })
+export function compileLine(instr, targetRegs, regOffset, command, fitsIm){
+  const syms = {}
+  const t = {};
+  const gsm = (sym)=>t[sym]
+  const tosym = {gsm:gsm}
+  let symcounter = 0;
+  function symadd(expr, type){
+    if(syms[expr]) return syms[expr];
+    let insym = [...new Set(type==-1?[]:expr.match(TOKRE))]
+    //console.log(expr, insym);
+    const ty = orderOfOps[type];
+    if(insym.every(x=>gsm(x)?.t===0) && type!=0 && ty.pconst && (!ty.haspconst||ty.haspconst(expr))){
+      return symadd(ty.pconst(expr,tosym).toString(),0);
+    }
+    const sym = '#'+(++symcounter);
+    const s = {
+      expr:expr, t: type, in:insym
+    }
+    if(type==0) s.c=orderOfOps[0].pconst(expr,null);
+    syms[expr] = sym
+    t[sym] = s
+    return sym
   }
-}
 
-IntEx.prototype.gsm = function(tok){
-  if(tok[0]=="$") return this.gsm(this.macrot[tok].s)
-  return this.microt[tok];
-}
-IntEx.prototype.ssm = function(tok){
-  if(tok[0]=="$") return this.ssm(this.macrot[tok].s)
-  return tok;
-}
-IntEx.prototype.symadd = function(expr, type){
-  if(this.symmap[expr]) return this.symmap[expr];
-  let insym = [...new Set(type==-1?[]:expr.match(TOKRE))].map(this.ssm.bind(this))
-  //console.log(expr, insym);
-  const ty = orderOfOps[type];
-  if(insym.every(x=>this.gsm(x).t==0) && type!=0 && ty.pconst && (!ty.haspconst||ty.haspconst(expr))){
-    return this.symadd(ty.pconst(expr,this).toString(),0);
-  }
-  const sym = '#'+(++this.symcounter);
-  const s = {
-    expr:expr, t: type,
-    in:insym
-  }
-  if(type == 1){
-    this.using.push([expr,sym]);
-  }
-  if(type==0) s.c=orderOfOps[0].pconst(expr,this);
-  this.symmap[expr] = sym
-  this.microt[sym] = s
-  return sym
-}
-IntEx.prototype.symReduce = function(f){
-  if(this.symmap[f]) return this.symmap[f]
-  let forig=f;
+  let f=command;
+  let out;
   for(let i=0; i<MAXDEPTH; i++){
     let t=0; let m=null;
     for(let op of orderOfOps){
@@ -409,88 +401,52 @@ IntEx.prototype.symReduce = function(f){
     if(m.length == 0){
       let final = f.match(new RegExp(`^${TOK}$`))?.[0]
       if(final){
-        return this.symmap[forig]=final
+        out =final; break;
       } else {
         throw console.error("Parse error", f)
       }
     }
     let nf=""; let lidx=0;
     m.forEach(x=>{
-      nf+=f.substring(lidx,x.index)+this.symadd(x[0],t)
+      nf+=f.substring(lidx,x.index)+symadd(x[0],t)
       lidx=x.index+x[0].length
     })
     f=nf+f.substring(lidx);
-  }
-}
-IntEx.prototype.addline = function(sym, f){
-  //console.log(sym,f)
-  let macroin = [...new Set(f.match(TOKRE))]
-  let s = this.symReduce(f)
-  let o = {
-    s:s, in:macroin, sym:sym
-  };
-  if(sym==null||sym[0]=="@") this.emitting.push(o)
-  if(sym!=null)this.macrot[sym]=o
-}
-function reverseObj(o){
-  const r={}
-  for(let [key, value] of Object.entries(o)){
-    (r[value]??(r[value]=[])).push(key)
-  }
-  return r;
-}
-IntEx.prototype.compileout = function(bits=8,verbose=false){
-  
+  } 
+
+
   const lastused = {}
   const queue = []
-  const tobase = (m)=>m[0]=="$"?this.macrot[m].s:m;
-  const fitsIm = (n)=>n<1<<(bits-1) && n>=-(1<<(bits-1))
   const enqdep = (m)=>{
-    m=tobase(m)
-    if(lastused[m]) return;
-    const s=this.microt[m]
+    if(lastused[m] || m[0]=="$") return;
+    const s=t[m]
     if(s.t==1) return;
     const ci=orderOfOps[s.t].canUseImm?.(s.expr)??true;
     const use = []
     s.in.forEach((n)=>{
-      n=tobase(n)
-      if(ci && this.microt[n].t==0 && fitsIm(this.gsm(n).c))return;
+      if(ci && gsm(n)?.t===0 && fitsIm(gsm(n).c))return;
+      if(gsm(n)?.t===1) return;
       enqdep(n);
       use.push(n);
     });
     queue.push(m)
     use.forEach(x=>lastused[x]=queue.length)
   }
-  this.emitting.forEach((x  ,i)=>{
-    enqdep(x.s);
-    if(x.sym?.[0]=="@"){
-      queue.push(x.sym);
-    }
-    lastused[tobase(x.s)]=queue.length;
-  })
-
-  const freed=[]
-  let next = this.using.length;
-  const regs={}
-  this.using.forEach(([r,sym],i)=>{
-    delete lastused[sym];
-    regs[sym]=i;
-  })
+  lastused[out]=queue.length;
   const release = reverseObj(lastused);
 
-  //return;
-  let instr = []
+  const regs={}
+  const freed=[]
+  let o = regOffset;
   const toktoreg = (m)=>{
-    let s=this.gsm(m);
-    return [regs[tobase(m)],(s.t==0 && fitsIm(s.c))?s.c:null]
+    let s=gsm(m);
+    let reg;
+    if(s[0]==1);
+    return [reg,(s?.t===0 && fitsIm(s.c))?s.c:null]
   }
   queue.forEach((x,i)=>{
-    if(x[0] == '@'){
-      instr.push([codes.storeChannel,new RegWrapper(regs[tobase(this.macrot[x].s)]),x.length-1,new StringWrapper(x.substring(1))])
-      return
-    }
-    const s=this.microt[x];
-    const reg = freed.pop()??next++;
+    const s=t[x];
+    const reg = freed.pop()??o++;
     orderOfOps[s.t].mkinstrs.call(this,s,new RegWrapper(reg),toktoreg,instr);
     regs[x]=reg;
     release[i]?.forEach(m => {
@@ -498,38 +454,13 @@ IntEx.prototype.compileout = function(bits=8,verbose=false){
       regs[m]=null;
     });
   })
-  //console.log(instr)
-  let final=[];
-  let fail=false;
-  const farr=(arr)=>{
-    arr.forEach(x => {
-      if(Array.isArray(x)) return farr(x);
-      if(x instanceof ValueWrapper) return x.arrAppend(final)
-      if(x===null || x===undefined || x>=1<<bits) return fail=true;
-      final.push(x)
-    });
-  }
-  try{
-    farr(instr)
-  }catch(ex){
-    console.error(ex);
-    fail=true;
-  }
-  if(verbose){
-    console.log(instr)
-    console.log(final)
-  }
-  return fail?null:[new Uint8Array(final),next]
+  console.log(instr)
 }
 
 
 
 
-
-
-//let a=new IntEx("@b = take(@0,clamp(@1,@3,max(1,2,3)),@1,2)")
-//console.log(a.compileout())
-function b_cc(...bufs){
+export function b_cc(...bufs){
   let offsets = [];
   let coff = 0
   for(let i=0; i<bufs.length; i++){
@@ -547,7 +478,7 @@ for(let i=65; i<91; i++)b64v+=String.fromCharCode(i);
 for(let i=97; i<123; i++)b64v+=String.fromCharCode(i);
 for(let i=48; i<58; i++)b64v+=String.fromCharCode(i);
 b64v+="+/";
-function toB64(a){
+export function toB64(a){
   let str=""; const pad=(3-a.length%3)%3;
   for(let i=0; i<a.length; i+=3){
     let num = (a[i]<<16)+((a[i+1]??0)<<8)+(a[i+2]??0)
@@ -555,53 +486,12 @@ function toB64(a){
   }
   return str.substring(0,str.length-pad)+"==".substring(0,pad);
 }
-const qcomp=(ex, bits=8)=>{
-  let a = new IntEx(ex);
-  if(a == null){
-    alert("failed");
-    return;
+export function reverseObj(o){
+  const r={}
+  for(let [key, value] of Object.entries(o)){
+    (r[value]??(r[value]=[])).push(key)
   }
-  window.mostrecent = a;
-  let b=a.compileout(8,true);
-  //console.log(b);
-  if(b[1]>=256) throw Error("Your program needs more than 256 registers. Please wait for 16-bit support.");
-  let header = new Uint16Array([1,a.using.length,b[1],0])
-  let c=[header, new Uint32Array([b[0].byteLength])]
-  let offset = 12;
-  a.using.forEach(([x,s])=>{
-    x=x.substring(1)
-    c.push(new Uint8Array([x.length]));
-    let d=new TextEncoder().encode(x);
-    if(d.byteLength != x.length || x.length>(1<<bits)-1) throw Error("bad channel name: "+x);
-    c.push(d)
-    offset+=1+x.length;
-  })
-  c.push(b[0])
-  header[3]=offset;
-  //console.log(c,b_cc(...c));
-  return toB64(b_cc(...c));
+  return r;
 }
 
-const e = document?.getElementById("Compileplease") 
-if(e)e.onclick = ()=>{
-  let s;
-  try{
-    s=qcomp(document.getElementById("compilerin").value)
-    document.getElementById("compilerout").innerHTML = s;
-  } catch(err){
-    alert("Failed. The error was "+err+" (look in dev console for more detail maybe)"); throw(err);
-  }
-}
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+

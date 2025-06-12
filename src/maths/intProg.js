@@ -1,0 +1,161 @@
+
+import { allreps, compileLine } from "./intLib.js"
+
+class Stack extends Array{peek(){return this[this.length-1]}empty(){return this.length==0};}
+
+class Scope{
+  constructor(entry, parent){
+    this.entry = entry;
+    this.parent = parent;
+    this.items = []
+    this.vars = {}
+    if(this.entry == "")return;
+    if(this.entry == "else"){
+      this.type = "else"; return;
+    }
+    let match = this.entry.match(/^(\w*)\((.+)\)$/)
+    if(match == null) throw new Error(`improper loop clause ${this.entry}`);
+    let [all, type, inner] = match;
+    this.type = type;
+    if(type!="if"&&type!="while") throw new Error(`Unknown block type ${type}`);
+    this.items.push(inner);
+  }
+  add(item){
+    this.items.push(item);
+  }
+  setvar(v, thislvl=false){
+    if(this.parent?.usevar(v)) return;
+    this.vars[v] = {start:this.i}
+  }
+  usevar(v){
+    const l=this.vars[v]
+    if(l!=undefined){
+      if(l[0]<=this.i.start) throw new Error(`use of unassigned variable ${v}`);
+      l.lastused=this.i;
+      return true;
+    }
+    return this.parent?.usevar(v)
+  }
+  getreg(v){
+    return this.vars[v]??this.parent.getreg(v);
+  }
+}
+Scope.prototype.build = function(ctx){
+  this.i=0;
+  const nitems = [];
+  for(const p of this.items){
+    if(p==="") continue;
+    if(p instanceof Scope){
+      this.i = nitems.push(p); continue;
+    }
+    let ph =p.match(/[^=]+(?=\=|$)/g)
+    if(ph==null) throw new Error(`invalid line ${p}`);
+    for(let i=0; i<ph.length-1; i++){
+      if(ph[i].match(/^\@\w+(?:\[[^\]]*\])?$/)) continue;
+      else if(ph[i].match(/^\$\w+$/)) this.setvar(ph[i]);
+      else throw new Error(`Invalid lvalue ${ph[i]}`)
+    }
+    this.i = nitems.push(ph);
+  }
+  this.i=0;
+  this.items=nitems;
+  for(;this.i<nitems.length; this.i++){
+    const p = nitems[this.i]
+    if(p instanceof Scope){
+      p.build(ctx)
+    } else {
+      const rv = p[p.length-1];
+      rv.match(/\$\w+/g)?.forEach((v)=>{
+        if(!this.usevar(v)) throw new Error(`use of undeclared variable ${v}`)
+      });
+      rv.match(/\@\w+(?:\[[^\]]*\])?/g)?.forEach(ctx.addChannel.bind(ctx))
+    }
+  }
+  delete this.i;
+}
+Scope.prototype.assignReg = function(offset){
+  const n = this.items.length;
+  const starts = Array.from({length:n},()=>[])
+  const ends = Array.from({length:n},()=>[])
+  for(const [v, range] of Object.entries(this.vars)){
+    starts[range.start].push(range);
+    ends[range.lastused??range.start].push(range);
+  }
+  let o=offset;
+  let s = new Stack()
+  for(let i=0; i<n; i++){
+    starts[i].forEach(r=>r.reg=s.pop()??(o++))
+    ends[i].forEach(r=>s.push(r.reg));
+  }
+  for(const p of this.items) if(p instanceof Scope) p.assignReg(o);
+  this.highestOffset = o;
+}
+Scope.prototype.compile = function(instrs, fitsim){
+  compileLine(instrs,[0],this.highestOffset,this.items[0][this.items[0].length-1],fitsim)
+}
+
+const escmap = {
+  "(":")", "[":"]", "{":"}"
+}
+const closechars = new Set(Object.values(escmap))
+class IntProg{
+  constructor(text){
+    this.using = {}
+    this.usingctr = 0;
+    const prog  = text.replaceAll(/\/\/.*$/gm,"").replaceAll(/\s/gm,"");
+    let str = prog;
+    for(let [sub, tok] of allreps){
+      str = str.replaceAll(sub, tok);
+    }
+    const un = new Stack()
+    const idx =0;
+    let cur = "";
+    const s = new Stack()
+    s.push(new Scope("",null))
+    for(let idx=0; idx<str.length; idx++){
+      const c = str[idx];
+      if(c=="}"){
+        if(cur!="" || !un.empty()) throw new Error("invalid program");
+        const top = s.pop()
+        s.peek().add(top);
+        continue
+      } 
+      if(c == ";"){
+        if(!un.empty()) throw new Error("invalid program");
+        if(s.peek().add(cur));
+        cur="";
+        continue;
+      }
+      if(c == "{"){
+        if(!un.empty()) throw new Error("invalid program");
+        s.push(new Scope(cur,s.peek()));
+        cur = "";
+        continue;
+      }
+      if(escmap[c]!==undefined){
+        un.push(escmap[c]);
+      }else if(closechars.has(c)){
+        if(un.pop()!=c) throw new Error("invalid program");
+      }
+      cur+=c;
+    }
+    if(s.length!=1||cur!=""||!un.empty()) throw new Error("invalid program");
+    const scope = this.main = s.pop();
+    scope.build(this)
+    scope.assignReg(this.usingctr)
+    scope.parent = this;
+  }
+  addChannel(ch){
+    this.using[ch]??=this.usingctr++
+  }
+  compile(bits=8){
+    this.main.compile([],(n)=>n<1<<(bits-1) && n>=-(1<<(bits-1)))
+  }
+  getreg(v){
+    this.using[v]
+  }
+}
+
+
+window.IntProg = IntProg;
+window.Stack = Stack;
