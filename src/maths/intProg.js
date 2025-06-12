@@ -238,7 +238,7 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
         instrs.push([codes.storeChannel,reg,x.length-1,new StringWrapper(x.substring(1))])
       })
       if(i==0 && (this.type=='if'||this.type=='while')){
-        instr.push([codes.jz, reg, end.jump()])
+        instrs.push([codes.jz, reg, end.jump()])
       }
     }
   }
