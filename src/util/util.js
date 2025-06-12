@@ -141,3 +141,38 @@ export class Color extends Uint8Array{
 function tohexpad1(n){
   return n<16?"0"+n.toString(16):n.toString(16)
 }
+
+
+export function b_cc(...bufs){
+  let offsets = [];
+  let coff = 0
+  for(let i=0; i<bufs.length; i++){
+    offsets.push(coff);
+    coff+=bufs[i].byteLength
+  }
+  let res = new Uint8Array(coff)
+  for(let i=0; i<bufs.length; i++){
+    res.set(new Uint8Array(bufs[i].buffer, bufs[i].byteOffset, bufs[i].byteLength),offsets[i])
+  }
+  return res
+}
+let b64v = ""
+for(let i=65; i<91; i++)b64v+=String.fromCharCode(i);
+for(let i=97; i<123; i++)b64v+=String.fromCharCode(i);
+for(let i=48; i<58; i++)b64v+=String.fromCharCode(i);
+b64v+="+/";
+export function toB64(a){
+  let str=""; const pad=(3-a.length%3)%3;
+  for(let i=0; i<a.length; i+=3){
+    let num = (a[i]<<16)+((a[i+1]??0)<<8)+(a[i+2]??0)
+    str+=b64v[(num>>18)]+b64v[(num>>12)&0x3f]+b64v[(num>>6)&0x3f]+b64v[(num)&0x3f]
+  }
+  return str.substring(0,str.length-pad)+"==".substring(0,pad);
+}
+export function reverseObj(o){
+  const r={}
+  for(let [key, value] of Object.entries(o)){
+    (r[value]??(r[value]=[])).push(key)
+  }
+  return r;
+}

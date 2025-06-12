@@ -6,6 +6,15 @@ body {
   background-color: #2f3134;
   color: #fff;
 }
+#out{
+  width:min(90%,800px);
+}
+#compilerout{
+  word-break: break-all;     /* Break anywhere if needed */
+  font-family: monospace;    /* Better readability for base64 */
+  overflow-wrap: break-word; /* Support older browsers */
+
+}
 
     </style>
   </head>
@@ -25,24 +34,46 @@ body {
       $someCondition = @left%3==0 && @right>5;
       @combine = take($someCondition, 10, max(@left,@right,30));
       setFlag<fish>($someCondition&&hasBerry<MapRoom3>(267));
+
+      setFlag<open1>(reflectGet<jelly1, Hold, Holder>());
+
     </textarea>
+    <p wow I really am scum></p>
+    <button id="Compileplease">Compile (or at least try)</button>
+    <div id="out">
+      <div style="display:flex; flex-direction: row; align-items: center;">
+        <p>output:</p> 
+        <button style="height:25px" 
+          onclick="navigator.clipboard.writeText(document.getElementById('compilerout').innerHTML);alert('done')">
+          copy to clipboard
+        </button>
+      </div>
+      <p id="compilerout"></p>
+    </div>
+    
     <!-- <textarea id="compilerin" style="width:min(90%,800px);height:300px;">
       @x = GetStrawb<a10>(-5+@1+(-3));
 
     </textarea> -->
-    <p wow I really am scum></p>
-    <button id="Compileplease">Compile (or at least try)</button>
     <p>so the way to use these is to put any string arguments in &lt;here&gt; and numerical ones in (there)<br>
     A generic one would be methodKey&lt;str1, str2&gt;(int1, int2, int3). This should return an int.</p>
-    <p>Comming soon: interop interface for mods to add their own interop functions <br>
-    print(args...) prints stuff to the auspicioushelper debug console <br>
-    hasBerry&lt;Levelname&gt;(id) Checks if the given berry EntityID is collected (Levelname+id) <br>
+    print(args...) prints stuff to the auspicioushelper debug console. Open in modsettings. <br><br>
+    reflectGet&lt;marker identifier, pathfield1, pathfield2,...&gt;(args...)<br> For use with Entity ID Markers - mark an entity then perform reflection. <br>
+    returns the final element of the path rounded values for primatives, 0/1 if nonnull for objects <br><br>
+    hasBerry&lt;Levelname&gt;(id) Checks if the given berry EntityID is collected (Levelname+id) <br><br>
     getFlag&lt;flagname&gt;() gets the specified flag <br>
     setFlag&lt;flagname&gt;(nval) sets the specified flag (nonzero is true) <br>
     getCounter&lt;countername&gt;()/ setCounter&lt;countername&gt;(nval) follow from above <br>
-    getCoreMode()/ setCoreMode(nval) 1 is icy <br>
-    getPlayer&lt;param&gt;() right now supports speedx, speedy, posx, posy (rounded) <br>
+    getCoreMode()/ setCoreMode(nval) 1 is icy <br><br>
+    getPlayer&lt;param&gt;() shortcut support for speedx, speedy, posx, posy; reflection for other paths (rounded) <br>
     killPlayer(choice) kills player if choice is nonzero</p>
+    <p>Comming soon: interop interface for mods to add their own interop functions <br>
+
+    <h2>More information:</h2>
+    <p>RunImmediately will run the code as soon as a channel is updated. It is very easy to cause an infinite loop with this.</p>
+    <p>Using __index__ in a reflectGet for the nth time will use the nth integer argument to try to index an enumerable</p>
+    <p>It will run every nth frame where n is the polling rate. If n=0, it will run on its update loop whenever a channel it uses has been changed.</p>
+    <p>Execution is branchless - compilation loops and if blocks is a long term unfinished goal</p>
   </body>
 
   <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
