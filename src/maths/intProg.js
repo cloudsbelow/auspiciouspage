@@ -1,5 +1,5 @@
 
-import { allreps, compileLine } from "./intLib.js"
+import { allreps, InstrWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, TOK, TOKRE } from "./intLib.js"
 
 class Stack extends Array{peek(){return this[this.length-1]}empty(){return this.length==0};}
 
@@ -90,9 +90,110 @@ Scope.prototype.assignReg = function(offset){
   for(const p of this.items) if(p instanceof Scope) p.assignReg(o);
   this.highestOffset = o;
 }
-Scope.prototype.compile = function(instrs, fitsim){
-  compileLine(instrs,[0],this.highestOffset,this.items[0][this.items[0].length-1],fitsim)
+Scope.prototype.compileLine = function(instr, targetRegs, command, fitsIm){
+  const syms = {}
+  const t = {};
+  const gsm = (sym)=>t[sym]
+  const tosym = {gsm:gsm}
+  let symcounter = 0;
+  function symadd(expr, type){
+    if(syms[expr]) return syms[expr];
+    let insym = [...new Set(type==-1?[]:expr.match(TOKRE))]
+    //console.log(expr, insym);
+    const ty = orderOfOps[type];
+    if(insym.every(x=>gsm(x)?.t===0) && type!=0 && ty.pconst && (!ty.haspconst||ty.haspconst(expr))){
+      return symadd(ty.pconst(expr,tosym).toString(),0);
+    }
+    const sym = '#'+(++symcounter);
+    const s = {
+      expr:expr, t: type, in:insym
+    }
+    if(type==0) s.c=orderOfOps[0].pconst(expr,null);
+    syms[expr] = sym
+    t[sym] = s
+    return sym
+  }
+
+  let f=command;
+  let out;
+  for(let i=0; i<MAXDEPTH; i++){
+    let t=0; let m=null;
+    for(let op of orderOfOps){
+      if((m=[...f.matchAll(op.re)]).length !=0){
+        t=op.t; break;
+      };
+    }
+    if(m.length == 0){
+      let final = f.match(new RegExp(`^${TOK}$`))?.[0]
+      if(final){
+        out =final; break;
+      } else {
+        throw console.error("Parse error", f)
+      }
+    }
+    let nf=""; let lidx=0;
+    m.forEach(x=>{
+      nf+=f.substring(lidx,x.index)+symadd(x[0],t)
+      lidx=x.index+x[0].length
+    })
+    f=nf+f.substring(lidx);
+  } 
+
+
+  const lastused = {}
+  const queue = []
+  const enqdep = (m)=>{
+    if(lastused[m] || m[0]=="$") return;
+    const s=t[m]
+    if(s.t==1) return;
+    const ci=orderOfOps[s.t].canUseImm?.(s.expr)??true;
+    const use = []
+    s.in.forEach((n)=>{
+      if(ci && gsm(n)?.t===0 && fitsIm(gsm(n).c))return;
+      if(gsm(n)?.t===1) return;
+      enqdep(n);
+      use.push(n);
+    });
+    queue.push(m)
+    use.forEach(x=>lastused[x]=queue.length)
+  }
+  enqdep(out)
+  lastused[out]=queue.length;
+  const release = reverseObj(lastused);
+
+  const regs={}
+  const freed=[]
+  let o = this.highestOffset;
+  const toktoreg = (m)=>{
+    let s=gsm(m);
+    let reg=regs[m];
+    if(s?.t===1)reg = this.getreg(s.expr);
+    console.log([reg,(s?.t===0 && fitsIm(s.c))?s.c:null],m,s);
+    return [reg,(s?.t===0 && fitsIm(s.c))?s.c:null]
+  }
+  const last = queue.pop();
+  queue.forEach((x,i)=>{
+    const s=t[x];
+    const reg = freed.pop()??new RegWrapper(o++);
+    orderOfOps[s.t].mkinstrs(s,reg,toktoreg,instr);
+    regs[x]=reg;
+    release[i]?.forEach(m => {
+      freed.push(regs[m]);
+      regs[m]=null;
+    });
+  })
+  const s=t[last];
+  const reg = targetRegs[0]??o;
+  orderOfOps[s.t].mkinstrs(s,reg,toktoreg,instr);
+  for(let i=1; i<targetRegs; i++){
+    instr.push([new InstrWrapper("copy"),targetRegs[i],reg])
+  }
+  return out;
 }
+Scope.prototype.compile = function(instrs, fitsim){
+  this.compileLine(instrs,[0],this.items[0][this.items[0].length-1],fitsim)
+}
+
 
 const escmap = {
   "(":")", "[":"]", "{":"}"
@@ -152,7 +253,7 @@ class IntProg{
     this.main.compile([],(n)=>n<1<<(bits-1) && n>=-(1<<(bits-1)))
   }
   getreg(v){
-    this.using[v]
+    return this.using[v]
   }
 }
 

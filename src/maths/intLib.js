@@ -43,11 +43,11 @@ ImmUintWrapper.prototype.arrAppend = function(arr, bits=8){
   }
   else throw Error();
 }
-export const JumpTargetWrapper = function(name){ValueWrapper.call(name)}
+export const JumpTargetWrapper = function(name){ValueWrapper.call(this, name)}
 JumpTargetWrapper.prototype = Object.create(ValueWrapper.prototype);
-export const JumpPoint = function(target){ValueWrapper.call(target)}
+export const JumpPoint = function(target){ValueWrapper.call(this, target)}
 JumpPoint.prototype = Object.create(ValueWrapper.prototype);
-export const RegWrapper = function(reg){ValueWrapper.call(reg)}
+export const RegWrapper = function(reg){ValueWrapper.call(this, reg)}
 RegWrapper.prototype = Object.create(ValueWrapper.prototype);
 RegWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
@@ -59,7 +59,7 @@ RegWrapper.prototype.arrAppend = function(arr, bits=8){
 }
 
 const codes_ = {}
-export const InstrWrapper = function(instr){ValueWrapper.call(instr)}
+export const InstrWrapper = function(instr){ValueWrapper.call(this, instr)}
 InstrWrapper.prototype = Object.create(ValueWrapper.prototype);
 InstrWrapper.prototype.arrAppend = function(arr, bits=8){
   if(bits == 8){
@@ -82,7 +82,7 @@ const codes = new Proxy(codes_,{
   get:(targ, p, rec)=>{
     let v = targ[p];
     if(v===undefined) console.error("No code "+p);
-    return v;
+    return new InstrWrapper(p);
   }
 })
 enums.forEach((x,i)=>codes_[x]=i);
@@ -194,7 +194,7 @@ const pfuncs={
 
 const ParenEx = /(?:[a-zA-Z_][\w]*(?:\<[A-Za-z_]\w*(?:\,*[A-Za-z_]\w*)*\>)?)?/
 
-const orderOfOps=[{  
+export const orderOfOps=[{  
     remid:`(0x|0b)?\\d+`,
     pconst:(v,a)=>v.startsWith('0b')?parseInt(v,v.substring(2)):parseInt(v),
     mkinstrs: (s,reg,fn,instrs)=>instrs.push([codes.loadImmediateInt, reg, new IntWrapper(s.c)])
@@ -364,98 +364,6 @@ for(let i=orderOfOps.length-1; i>=0; i--){
   ops.t=i;
 }
 
-
-export function compileLine(instr, targetRegs, regOffset, command, fitsIm){
-  const syms = {}
-  const t = {};
-  const gsm = (sym)=>t[sym]
-  const tosym = {gsm:gsm}
-  let symcounter = 0;
-  function symadd(expr, type){
-    if(syms[expr]) return syms[expr];
-    let insym = [...new Set(type==-1?[]:expr.match(TOKRE))]
-    //console.log(expr, insym);
-    const ty = orderOfOps[type];
-    if(insym.every(x=>gsm(x)?.t===0) && type!=0 && ty.pconst && (!ty.haspconst||ty.haspconst(expr))){
-      return symadd(ty.pconst(expr,tosym).toString(),0);
-    }
-    const sym = '#'+(++symcounter);
-    const s = {
-      expr:expr, t: type, in:insym
-    }
-    if(type==0) s.c=orderOfOps[0].pconst(expr,null);
-    syms[expr] = sym
-    t[sym] = s
-    return sym
-  }
-
-  let f=command;
-  let out;
-  for(let i=0; i<MAXDEPTH; i++){
-    let t=0; let m=null;
-    for(let op of orderOfOps){
-      if((m=[...f.matchAll(op.re)]).length !=0){
-        t=op.t; break;
-      };
-    }
-    if(m.length == 0){
-      let final = f.match(new RegExp(`^${TOK}$`))?.[0]
-      if(final){
-        out =final; break;
-      } else {
-        throw console.error("Parse error", f)
-      }
-    }
-    let nf=""; let lidx=0;
-    m.forEach(x=>{
-      nf+=f.substring(lidx,x.index)+symadd(x[0],t)
-      lidx=x.index+x[0].length
-    })
-    f=nf+f.substring(lidx);
-  } 
-
-
-  const lastused = {}
-  const queue = []
-  const enqdep = (m)=>{
-    if(lastused[m] || m[0]=="$") return;
-    const s=t[m]
-    if(s.t==1) return;
-    const ci=orderOfOps[s.t].canUseImm?.(s.expr)??true;
-    const use = []
-    s.in.forEach((n)=>{
-      if(ci && gsm(n)?.t===0 && fitsIm(gsm(n).c))return;
-      if(gsm(n)?.t===1) return;
-      enqdep(n);
-      use.push(n);
-    });
-    queue.push(m)
-    use.forEach(x=>lastused[x]=queue.length)
-  }
-  lastused[out]=queue.length;
-  const release = reverseObj(lastused);
-
-  const regs={}
-  const freed=[]
-  let o = regOffset;
-  const toktoreg = (m)=>{
-    let s=gsm(m);
-    let reg;
-    if(s[0]==1);
-    return [reg,(s?.t===0 && fitsIm(s.c))?s.c:null]
-  }
-  queue.forEach((x,i)=>{
-    const s=t[x];
-    const reg = freed.pop()??o++;
-    orderOfOps[s.t].mkinstrs.call(this,s,new RegWrapper(reg),toktoreg,instr);
-    regs[x]=reg;
-    release[i]?.forEach(m => {
-      freed.push(regs[m]);
-      regs[m]=null;
-    });
-  })
-  console.log(instr)
-}
 
 
 
