@@ -143,19 +143,6 @@ function tohexpad1(n){
 }
 
 
-export function b_cc(...bufs){
-  let offsets = [];
-  let coff = 0
-  for(let i=0; i<bufs.length; i++){
-    offsets.push(coff);
-    coff+=bufs[i].byteLength
-  }
-  let res = new Uint8Array(coff)
-  for(let i=0; i<bufs.length; i++){
-    res.set(new Uint8Array(bufs[i].buffer, bufs[i].byteOffset, bufs[i].byteLength),offsets[i])
-  }
-  return res
-}
 let b64v = ""
 for(let i=65; i<91; i++)b64v+=String.fromCharCode(i);
 for(let i=97; i<123; i++)b64v+=String.fromCharCode(i);

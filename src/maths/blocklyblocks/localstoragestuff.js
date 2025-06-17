@@ -1,31 +1,34 @@
 //import { Workspace } from "blockly";
 
 import { _breffn, _div, _subidx } from "../../util/templates.js";
+import { keys } from "../../util/util.js";
 
-const SAVELOADSTR="m_"
+const SAVELOADSTR="ahmc_"
 const namebar = document.getElementById("namebar")
 
 
 export const currentLoadInfo = {
   savename:"",
-  saveinfo:""
+  saveinfo:"",
+  getcur:null,
+  setcur:null,
 }
-function getsaveinfo(){
-  return Date.now();
-}
-function setsaveinfo(info){
-  console.log(info);
-}
+
 /**
  * 
  * @param {Workspace} workspace 
  */
-export function saveLoadSetup(workspace){
-
+export function saveLoadSetup(getcur,setcur){
+  console.log(getcur,setcur)
+  currentLoadInfo.getcur=getcur;
+  currentLoadInfo.setcur=setcur;
+  setInterval(() => {
+    if(currentLoadInfo.saveinfo!=currentLoadInfo.getcur()) namebar.classList.add("unsaved")
+  }, 1000);
 }
 
 function save(){
-  currentLoadInfo.saveinfo = getsaveinfo()
+  currentLoadInfo.saveinfo = currentLoadInfo.getcur()
   let name = currentLoadInfo.savename;
   while(name == ""){
     name = prompt("Please title project before saving")
@@ -34,9 +37,10 @@ function save(){
       if(!confirm("This overrides an existing save - continue?")) name=""
     }
   }
+  currentLoadInfo.savename=name;
   namebar.classList.remove("unsaved", "unnamed")
-  namebar.innerText = saveinfo;
-  localStorage.setItem(currentLoadInfo.savename, getsaveinfo());
+  namebar.innerText = currentLoadInfo.savename;
+  localStorage.setItem(SAVELOADSTR+currentLoadInfo.savename, currentLoadInfo.saveinfo = currentLoadInfo.getcur());
 }
 document.getElementById("savebutton").onclick = save;
 
@@ -46,27 +50,71 @@ class loadItem{
   static template = new _div({
     ref:"root",cn:"loadItem",c:[
       new _div({tc:new _subidx("name")}),
-      new _div({onclick:new _breffn(loadItem.prototype.delete),tc:"X"})
+      new _div({onclick:new _breffn(loadItem.prototype.delete),tc:"X",cn:"delloaditem"})
     ], onclick:new _breffn(loadItem.prototype.load)
   })
   constructor(name){
     this.name=name;
     lc.appendChild(loadItem.template.mk(this,this))
   }
-  delete(){
-    localStorage.removeItem(this.name)
-    lc.remove(this.root)
+  delete(event){
+    event.stopPropagation();
+    localStorage.removeItem(SAVELOADSTR+this.name)
+    lc.removeChild(this.root)
   }
   load(){
-    currentLoadInfo.savename=this.name;
-    currentLoadInfo.saveinfo=localStorage.getItem(this.name)
-    setsaveinfo(currentLoadInfo.saveinfo)
-    loadcont.style.display="none"
+    currentLoadInfo.savename=namebar.innerText=this.name;
+    currentLoadInfo.saveinfo=localStorage.getItem(SAVELOADSTR+this.name)
+    currentLoadInfo.setcur(currentLoadInfo.saveinfo)
+    closemenu()
   }
+}
+function closemenu(){
+  console.log("here")
+  lc.innerHTML="";
+  loadcont.style.display="none";
+  keys.on.Escape.delete(closemenu)
 }
 function load(){
-  for(let i=0; i<100; i++){
-    new loadItem(i+" "+Math.random())
+  keys.on.Escape.add(closemenu)
+  lc.innerHTML="";
+  loadcont.style.display="block"
+  for(let i=0; i<localStorage.length; i++){
+    let key = localStorage.key(i);
+    if(key.startsWith(SAVELOADSTR)){
+      new loadItem(key.substring(SAVELOADSTR.length));
+    }
   }
 }
+load()
+document.getElementById("loadbutton").onclick = load;
+document.getElementById("clickthrublocker").onclick = closemenu;
 window.load = load;
+
+document.getElementById("loadmenuNewbutton").onclick = function(){
+  closemenu()
+  currentLoadInfo.setcur(currentLoadInfo.saveinfo = "{}")
+  namebar.innerText="Untitled"
+  namebar.classList.add("unnamed")
+  currentLoadInfo.savename=""
+}
+document.getElementById("newbutton").onclick = function(){
+  if(currentLoadInfo.saveinfo!=currentLoadInfo.getcur()){
+    if(confirm("You have unsaved work. Would you like to save it?")) save();
+  }
+  currentLoadInfo.setcur(currentLoadInfo.saveinfo = "{}")
+  namebar.innerText="Untitled"
+  namebar.classList.add("unnamed")
+  currentLoadInfo.savename=""
+}
+
+namebar.onclick = function(){
+  var name = prompt("Enter a new name")
+  if(name=="" || name==null) return;
+  if(localStorage.getItem(SAVELOADSTR+name)!=null){
+    if(!confirm("This overrides an existing save - continue?")) return;
+  }
+  namebar.innerText = name;
+  currentLoadInfo.savename = name;
+  save();
+}

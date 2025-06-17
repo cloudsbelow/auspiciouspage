@@ -4,19 +4,65 @@
   <meta charset="UTF-8">
   <title>Blockly Example</title>
   <style>
-    html, body { height: 100%; margin: 0; overflow:hidden; --height:50px}
+    html, body { 
+      height: 100%; 
+      margin: 0; 
+      overflow:hidden; 
+      --height:50px;
+      --dark:#212426;
+      --dark-fg:#656769;
+      --mid:#47494a;
+      background-color: var(--mid);
+    }
     #blocklyDiv {
       position:absolute;
       height: calc(100% - var(--height)); 
       width: 100%; 
       margin-top: var(--height);
     }
-    .tab-bar {
+    #header{
       position:absolute;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      width:100%;
+    }
+    .tab-bar {
       display: flex;
       align-items: flex-end;
       height: var(--height); 
       padding: 0 10px;
+    }
+    #saveloaditems{
+      color:white;
+      display:flex;
+      flex-direction: row;
+      width:130px;
+      justify-content: space-between;
+      height:25px;
+      margin-top:calc(var(--height) - 25px);
+      margin-right: 50px;
+    }
+    #saveloaditems div{
+      display:flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: red;
+      width:40px;
+    }
+    #saveloaditems div:hover{
+      background-color: rgb(255,100,100);
+    }
+    #namebar{
+      color:white;
+      top: -10px;
+    }
+    #namebar.unsaved{
+      font-style: italic;
+    }
+    #namebar.unnamed{
+      color:#aaa;
     }
 
     .tab {
@@ -47,33 +93,83 @@
       z-index: 1;
     }
 
-    #loadcontainer{
+    #loadmenu{
+      z-index: 1000;
       position:fixed;
       --hwidth:max(min(200px, 45vw), min(350px, 30vw));
       width:calc(2 * var(--hwidth));
       height: 90vh;
       left:calc(50vw - var(--hwidth));
       top:5vh;
+      background-color: var(--dark);
+      box-shadow: 3px 2px 10px -2px rgba(0,0,0,1);
+    }
+    #loadcontents{
+      border-left:5px solid white;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      height: calc(100% - 80px);
+      margin: 10px 20px;
+      background-color: var(--mid);
+      padding:5px 0px 0px;
+      box-shadow: inset 3px 2px 10px -2px rgba(0,0,0,1);
+    }
+    #loadcontents .loadItem{
+      display:flex;
+      justify-content: space-between;
+      border-bottom:1px solid white;
+      color:white;
+      padding: 2px 4x;
+      padding-left: 20px;
+      cursor:pointer;
+    }
+    #loadcontents .loadItem:hover{
+      background-color: var(--dark-fg);
+    }
+    #loadcontents .delloaditem{
+      padding:0px 10px;
+      background-color: rgba(255,0,0,0.5);
+    }
+    #loadcontents .delloaditem:hover{
       background-color: red;
+      padding:0px 15px;
+    }
+    #clickthrublocker{
+      z-index: 999;
+      position:fixed;
+      left:0px; right:0px; top:0px; bottom:0px;
+      backdrop-filter: blur(8px);
+    }
+
+    .blocklyMainBackground {
+      fill: var(--dark) !important; 
+    }
+    .blocklyFlyoutBackground {
+      fill: var(--mid) !important;
     }
   </style>
 </head>
 <body>
   <div id="header">
     <div class="tab-bar" id="categorySelector"></div>
-    <div id="namebar" id="savename"></div>
+    <h1 id="namebar"></h1>
     <div id="saveloaditems">
-      <div id="savebutton"></div>
-      <div id="newbutton"></div>
-      <div id="loadbutton"></div>
+      <div id="savebutton">save</div>
+      <div id="newbutton">new</div>
+      <div id="loadbutton">load</div>
     </div>
   </div>
   <div id="blocklyDiv"></div>
   <div id="loadcontainer">
-    <div id="loadcontents"></div>
+    <div id="clickthrublocker"></div>
+    <div id="loadmenu">
+      <div style="display:flex; justify-content: space-between; color:white; padding: 0px 20px;">
+        <h2 style="margin-left: 15px;">Load Script</h2>
+        <h2 style="margin-right:15px" id="loadmenuNewbutton">New</h2>
+      </div>
+      <div id="loadcontents"></div>
+    </div>
   </div>
 </body>
-  <script type="module" src="./blocklyblocks/localstoragestuff.js"></script>
-
-<!--<script type="module" src="./blockly.bundle.js"></script>-->
+  <script type="module" src="./blockly.bundle.js"></script>
 </html>

@@ -2,6 +2,7 @@ import { Blocks, Generator, inject, serialization } from "blockly"
 import { pcomp } from "./intProg"
 import { addControlBlocks } from "./blocklyblocks/control"
 import { addStatementBlocks } from "./blocklyblocks/statement";
+import { saveLoadSetup } from "./blocklyblocks/localstoragestuff";
 
 
 const tabs = [{
@@ -37,7 +38,11 @@ tabs.forEach((tab)=>{
 window.pc = pcomp
 const container = document.getElementById("blocklyDiv")
 var workspace = inject(container, {toolbox:toolbox})
-window.saveLoadSetup(workspace);
+saveLoadSetup(()=>{
+  return JSON.stringify(serialization.workspaces.save(workspace))
+},(state)=>{
+  return serialization.workspaces.load(JSON.parse(state),workspace)
+});
 
 const generator = new Generator('AuspiciousScript');
 
