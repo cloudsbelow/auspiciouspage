@@ -1,4 +1,4 @@
-import { Blocks, Generator, inject } from "blockly"
+import { Blocks, Generator, inject, serialization } from "blockly"
 import { pcomp } from "./intProg"
 import { addControlBlocks } from "./blocklyblocks/control"
 import { addStatementBlocks } from "./blocklyblocks/statement";
@@ -37,5 +37,8 @@ tabs.forEach((tab)=>{
 window.pc = pcomp
 const container = document.getElementById("blocklyDiv")
 var workspace = inject(container, {toolbox:toolbox})
+window.saveLoadSetup(workspace);
 
 const generator = new Generator('AuspiciousScript');
+
+

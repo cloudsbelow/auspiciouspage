@@ -46,12 +46,34 @@
       border-bottom: none;
       z-index: 1;
     }
+
+    #loadcontainer{
+      position:fixed;
+      --hwidth:max(min(200px, 45vw), min(350px, 30vw));
+      width:calc(2 * var(--hwidth));
+      height: 90vh;
+      left:calc(50vw - var(--hwidth));
+      top:5vh;
+      background-color: red;
+    }
   </style>
 </head>
 <body>
-  <div class="tab-bar" id="categorySelector">
+  <div id="header">
+    <div class="tab-bar" id="categorySelector"></div>
+    <div id="namebar" id="savename"></div>
+    <div id="saveloaditems">
+      <div id="savebutton"></div>
+      <div id="newbutton"></div>
+      <div id="loadbutton"></div>
+    </div>
   </div>
   <div id="blocklyDiv"></div>
+  <div id="loadcontainer">
+    <div id="loadcontents"></div>
+  </div>
 </body>
-<script type="module" src="./blockly.bundle.js"></script>
+  <script type="module" src="./blocklyblocks/localstoragestuff.js"></script>
+
+<!--<script type="module" src="./blockly.bundle.js"></script>-->
 </html>
