@@ -4,11 +4,53 @@
   <meta charset="UTF-8">
   <title>Blockly Example</title>
   <style>
-    html, body { height: 100%; margin: 0; }
-    #blocklyDiv { height: 100%; width: 100%; }
+    html, body { height: 100%; margin: 0; overflow:hidden; --height:50px}
+    #blocklyDiv {
+      position:absolute;
+      height: calc(100% - var(--height)); 
+      width: 100%; 
+      margin-top: var(--height);
+    }
+    .tab-bar {
+      position:absolute;
+      display: flex;
+      align-items: flex-end;
+      height: var(--height); 
+      padding: 0 10px;
+    }
+
+    .tab {
+      position: relative;
+      height: 30px;
+      padding: 0 16px;
+      line-height: 30px;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      margin: 0 4px;
+      cursor: pointer;
+      transition: height 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color:white;
+    }
+
+    .tab:not(.selected):hover {
+      height: 45px;
+    }
+
+    .tab.selected {
+      height: 45px;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
+  <div class="tab-bar" id="categorySelector">
+  </div>
   <div id="blocklyDiv"></div>
 </body>
 <script type="module" src="./blockly.bundle.js"></script>

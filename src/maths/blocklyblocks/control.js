@@ -2,9 +2,9 @@ import { Blocks } from "blockly";
 
 
 export function addControlBlocks(){
-  const ifs = new Set(["ahc_if", "ahc_else"]);
+  const ifs = new Set(["ahc_if", "ahc_elseif"]);
   const ensureif = function(event){
-    if (!this.workspace || this.isInFlyout) return;
+    if (!this.workspace || this.isInFlyout || !this.getPreviousBlock()) return;
     if(ifs.has(this.getPreviousBlock().type)){
       this.setWarningText(null); return;
     }
@@ -98,4 +98,14 @@ export function addControlBlocks(){
       this.setTooltip("Time to pause program execution (centiseconds)");
     }
   };
+  return [
+      {kind:"block", type:"ahc_if"},
+      {kind:"block", type:"ahc_elseif"},
+      {kind:"block", type:"ahc_else"},
+      {kind:"block", type:"ahc_while"},
+      {kind:"block", type:"ahc_break"},
+      {kind:"block", type:"ahc_continue"},
+      {kind:"block", type:"ahc_exit"},
+      {kind:"block", type:"ahc_wait"},
+    ]
 }

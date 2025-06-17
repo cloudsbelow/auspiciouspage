@@ -58,7 +58,6 @@ export function addStatementBlocks(){
       let inputCount = this.inputs_;
       let lastInput = this.getInput("ARG" + (inputCount - 1));
       if (!lastInput || (lastInput.connection && lastInput.connection.targetBlock())) {
-        console.log(this.inputs_)
         const inputName = "ARG" + inputCount;
         this.appendValueInput(inputName)
           .setCheck(null)
@@ -138,4 +137,15 @@ export function addStatementBlocks(){
       this.setColour(230);
     }
   }
+
+  return [
+      {kind:"block",type:"ahs_print"},
+      {kind:"block",type:"ahs_number"},
+      {kind:"block",type:"ahs_channel"},
+      {kind:"block",type:"ahs_variable"},
+      {kind:"block",type:"ahs_flag"},
+      {kind:"block",type:"ahs_set"},
+      {kind:"block",type:"ahs_op"},
+      {kind:"block",type:"ahs_not"},
+    ]
 }
