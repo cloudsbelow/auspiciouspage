@@ -1,0 +1,6 @@
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" class="compileSvg"><!--width="90px" height="20px" -->
+    <rect x="2px" y="2px" width="calc(100% - 4px)" height="calc(100% - 4px)"
+          stroke="#fff5" stroke-width="2px" rx="4px"/>
+    <text y="70%" x="50%" fill="white"
+          textLength="100%" font-family="sans-serif" text-anchor="middle">Compile</text>
+</svg>

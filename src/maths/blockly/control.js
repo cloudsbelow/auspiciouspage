@@ -1,13 +1,22 @@
-import {Blocks, Events, FieldTextInput, Extensions} from "blockly";
+import {Blocks, Events, FieldTextInput, Extensions, FieldImage} from "blockly";
 import {simpleBlock} from "./utils.js";
 
 export const controlColor = 240;
+const compileButtonPath = "/src/maths/blockly/compile.svg";
 
 export function addControlBlocks(){
   Blocks['program_header'] = simpleBlock(function() {
     this.hat = "cap"
-    this.appendDummyInput('').appendField('program block').appendField(new FieldTextInput(''), '');
-    this.setInputsInline(true)
+    this.appendDummyInput('').appendField('routine block').appendField(new FieldTextInput(''), '');
+    this.appendDummyInput('').appendField(new FieldImage(compileButtonPath, 90, 30, "", ()=>{
+
+      console.log("compile")
+      const nextBlock = this.nextConnection && this.nextConnection.targetBlock();
+      const nextCode = generator.blockToCode(nextBlock);
+
+    }, false, {
+
+    }), '');
     this.setNextStatement(true, null);
     this.setTooltip('');
     this.setHelpUrl('');

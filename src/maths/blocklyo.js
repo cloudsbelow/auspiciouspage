@@ -47,4 +47,4 @@ var workspace = inject(container, {
   trashcan: true,
 })
 
-const generator = new Generator('AuspiciousScript');
+export const generator = new Generator('AuspiciousScript');
