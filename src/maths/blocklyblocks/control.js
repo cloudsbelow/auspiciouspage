@@ -35,12 +35,12 @@ export function addControlBlocks(){
     let c=this;
     while(c=c.getSurroundParent()) {
       if (loops.has(c.type)) {
-        console.log("yay!")
+        this.setWarningText(null);
         this.setDisabledReason(false, loopDisableReason);
         return;
       }
     }
-    console.log("bruh")
+    this.setWarningText("Must be in loop!");
     this.setDisabledReason(true, loopDisableReason);
   }
   Blocks['ahc_while'] = {
