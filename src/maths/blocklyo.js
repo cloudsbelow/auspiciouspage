@@ -3,7 +3,9 @@ import { pcomp } from "./intProg"
 import {addControlBlocks, controlColor} from "./blockly/control"
 import { addStatementBlocks, mathColor } from "./blockly/statement";
 import {addIngameBlocks, gameColor} from "./blockly/ingame.js";
+import {registerFieldAngle} from "@blockly/field-angle";
 
+registerFieldAngle()
 const tabs = [{
   content:addControlBlocks(),
   color:controlColor,

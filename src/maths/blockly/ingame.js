@@ -1,6 +1,6 @@
 import { FieldDropdown, FieldCheckbox, FieldTextInput } from "blockly";
 import {simpleBlock, register} from "./utils.js";
-import {mathColor} from "./statement.js";
+import {FieldAngle} from "@blockly/field-angle";
 
 export const gameColor = 350;
 
@@ -42,7 +42,7 @@ export function addIngameBlocks(){
         this.setNextStatement(true, null);
         this.setTooltip('');
         this.setHelpUrl('');
-        this.setColour(mathColor);
+        this.setColour(gameColor);
     }));
     register("ahs_get_player", toReturn, simpleBlock(function(){//todo: mutator
         this.appendDummyInput('TEXT').appendField('get player property')
@@ -62,7 +62,7 @@ export function addIngameBlocks(){
     }));
     register("ahs_kill_player", toReturn, simpleBlock(function(){
         this.appendValueInput('KILL').appendField('kill player if');
-        this.appendDummyInput('').appendField('custom direction?').appendField(new FieldCheckbox('TRUE'), 'CUSTOMDIR').appendField(new FieldAngle(0), 'DIR');
+        this.appendDummyInput('').appendField('custom direction?').appendField(new FieldCheckbox('TRUE'), 'CUSTOMDIR').appendField(new FieldAngle(90), 'DIR');
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
         this.setTooltip('');
