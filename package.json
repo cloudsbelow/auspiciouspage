@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
+    "@blockly/field-angle": "^6.0.1",
     "blockly": "^12.1.0",
     "esbuild": "^0.25.5"
   }

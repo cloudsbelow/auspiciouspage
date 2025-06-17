@@ -4,7 +4,8 @@ import http from 'http'
 const contentTypes = {
   '.html': 'text/html',
   '.js': 'text/javascript',
-  '.css': 'text/css'
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
 }
 function rejectReq(num, res, err){
   console.log("rejected a request with reason "+num+" for "+err);

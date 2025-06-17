@@ -16,8 +16,8 @@
     }
     #blocklyDiv {
       position:absolute;
-      height: calc(100% - var(--height)); 
-      width: 100%; 
+      height: calc(100% - var(--height));
+      width: 100%;
       margin-top: var(--height);
     }
     #header{
@@ -30,7 +30,7 @@
     .tab-bar {
       display: flex;
       align-items: flex-end;
-      height: var(--height); 
+      height: var(--height);
       padding: 0 10px;
     }
     #saveloaditems{
@@ -66,31 +66,28 @@
     }
 
     .tab {
+      font-family: sans-serif;
       position: relative;
       height: 30px;
       padding: 0 16px;
       line-height: 30px;
-      border-top-left-radius: 6px;
-      border-top-right-radius: 6px;
+      border-radius: 6px 6px 0 0 ;
       margin: 0 4px;
       cursor: pointer;
-      transition: height 0.2s ease;
       display: flex;
-      align-items: center;
       justify-content: center;
       overflow: hidden;
       color:white;
+
+      transition: height 0.2s ease;
     }
 
     .tab:not(.selected):hover {
-      height: 45px;
+      height: 40px;
     }
 
     .tab.selected {
       height: 45px;
-      border: 1px solid #ccc;
-      border-bottom: none;
-      z-index: 1;
     }
 
     #loadmenu{
@@ -171,5 +168,5 @@
     </div>
   </div>
 </body>
-  <script type="module" src="./blockly.bundle.js"></script>
+<script type="module" src="./blockly.bundle.js"></script>
 </html>
