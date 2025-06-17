@@ -1,17 +1,16 @@
 import { Blocks, Generator, inject } from "blockly"
 import { pcomp } from "./intProg"
-import { addControlBlocks } from "./blocklyblocks/control"
-import { addStatementBlocks } from "./blocklyblocks/statement";
-
+import {addControlBlocks, controlColor} from "./blocklyblocks/control"
+import { addStatementBlocks, mathColor } from "./blocklyblocks/statement";
 
 const tabs = [{
   content:addControlBlocks(),
-  color:"#dd7722",
-  label:"flow",
+  color:controlColor,
+  label:"Flow",
 },{
   content:addStatementBlocks(),
-  color:"#aa44ff",
-  label:"math",
+  color:mathColor,
+  label:"Math",
 }]
 const toolbox = {
   kind: "flyoutToolbox",
@@ -22,7 +21,7 @@ let selected = null;
 tabs.forEach((tab)=>{
   const d = document.createElement('div');
   d.classList.add('tab');
-  d.style.backgroundColor = tab.color;
+  d.style.backgroundColor = `hsl(${tab.color} 29.1062162% 50.2072%)`;
   d.innerText = tab.label
   d.onclick = tab.onclick = ()=>{
     toolbox.contents = tab.content;
@@ -32,10 +31,13 @@ tabs.forEach((tab)=>{
     workspace.updateToolbox(toolbox);
   }
   tabdiv.appendChild(d);
-}) 
+})
 
 window.pc = pcomp
 const container = document.getElementById("blocklyDiv")
-var workspace = inject(container, {toolbox:toolbox})
+var workspace = inject(container, {
+  toolbox:toolbox,
+  trashcan: true,
+})
 
 const generator = new Generator('AuspiciousScript');

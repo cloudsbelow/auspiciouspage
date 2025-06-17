@@ -1,71 +1,60 @@
-import { Blocks } from "blockly";
+import { Blocks, FieldTextInput } from "blockly";
 
+export const controlColor = 240;
 
 export function addControlBlocks(){
-  const ifs = new Set(["ahc_if", "ahc_elseif"]);
-  const ensureif = function(event){
-    if (!this.workspace || this.isInFlyout || !this.getPreviousBlock()) return;
-    if(ifs.has(this.getPreviousBlock().type)){
-      this.setWarningText(null); return;
+  Blocks['program_header'] = {
+    init: function() {
+      this.hat="cap"
+      this.appendDummyInput('').appendField('program block').appendField(new FieldTextInput(''), '');
+      this.setInputsInline(true)
+      this.setNextStatement(true, null);
+      this.setTooltip('');
+      this.setHelpUrl('');
+      this.setColour("#e4bd00");
     }
-    this.setWarningText("Must follow if or else if!");
-  }
+  };
+
   Blocks['ahc_if'] = {
     init: function() {
-      this.appendValueInput("CONDITION").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("If");
-      this.appendStatementInput("CODE").setCheck(null);
+      this.appendValueInput("CONDITION0").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("if");
+      this.appendStatementInput("CODE0").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("do");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, "IF");
-      this.setColour(230);
+      this.setColour(controlColor);
       this.setTooltip("Execute the inner code if the provided condition is nonzero");
     }
   };
-  Blocks['ahc_elseif'] = {
-    init: function() {
-      this.appendValueInput("CONDITION").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("Else If");
-      this.appendStatementInput("CODE").setCheck(null);
-      this.setPreviousStatement(true, "IF");
-      this.setNextStatement(true, "IF");
-      this.setColour(230);
-      this.setTooltip("Execute the inner code if previous if statement not triggered and provided condition is nonzero");
-    },
-    onchange:ensureif
-  };
-  Blocks['ahc_else'] = {
-    init: function() {
-      this.appendValueInput("CONDITION").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("Else");
-      this.appendStatementInput("CODE").setCheck(null);
-      this.setPreviousStatement(true, "IF");
-      this.setNextStatement(true, null);
-      this.setColour(230);
-      this.setTooltip("Execute the inner code if previous if statement not triggered");
-    },
-    onchange:ensureif
-  };
 
   const loops = new Set(["ahc_while", "ahc_loop"]);
+  const loopDisableReason = "Must be in loop!";
   const ensureloop = function(event){
     if (!this.workspace || this.isInFlyout) return;
     let c=this;
-    while(c=c.getSurroundParent()) if(loops.has(c.type)){
-      this.setWarningText(null); return;
+    while(c=c.getSurroundParent()) {
+      if (loops.has(c.type)) {
+        console.log("yay!")
+        this.setDisabledReason(false, loopDisableReason);
+        return;
+      }
     }
-    this.setWarningText("Must be in loop!");
+    console.log("bruh")
+    this.setDisabledReason(true, loopDisableReason);
   }
   Blocks['ahc_while'] = {
     init: function() {
-      this.appendValueInput("CONDITION").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("While");
-      this.appendStatementInput("CODE").setCheck(null);
+      this.appendValueInput("CONDITION").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("while");
+      this.appendStatementInput("CODE").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("do");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
-      this.setColour(230);
+      this.setColour(controlColor);
       this.setTooltip("Execute the inner code while some condition is nonzero");
     }
   };
   Blocks['ahc_break'] = {
     init: function() {
-      this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField("Break");
-      this.setColour(230)
+      this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField("break");
+      this.setColour(controlColor)
       this.setPreviousStatement(true, null);
       this.setTooltip("Leave the surrounding loop");
     },
@@ -73,8 +62,8 @@ export function addControlBlocks(){
   };
   Blocks['ahc_continue'] = {
     init: function() {
-      this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField("Continue");
-      this.setColour(230)
+      this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField("continue");
+      this.setColour(controlColor)
       this.setPreviousStatement(true, null);
       this.setTooltip("Go to next iteration of surrounding loop");
     },
@@ -82,8 +71,8 @@ export function addControlBlocks(){
   };
   Blocks['ahc_exit'] = {
     init: function() {
-      this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField("Exit");
-      this.setColour(230)
+      this.appendDummyInput().setAlign(Blockly.ALIGN_RIGHT).appendField("exit");
+      this.setColour(controlColor)
       this.setPreviousStatement(true, null);
       this.setTooltip("Exit the program");
     },
@@ -92,20 +81,20 @@ export function addControlBlocks(){
     init: function() {
       this.appendValueInput("a")
           .setCheck(null)
-          .appendField("Wait");
+          .appendField("wait");
       this.setPreviousStatement(true, null);
-      this.setColour(230);
+      this.setNextStatement(true, null);
+      this.setColour(controlColor);
       this.setTooltip("Time to pause program execution (centiseconds)");
     }
   };
   return [
-      {kind:"block", type:"ahc_if"},
-      {kind:"block", type:"ahc_elseif"},
-      {kind:"block", type:"ahc_else"},
-      {kind:"block", type:"ahc_while"},
-      {kind:"block", type:"ahc_break"},
-      {kind:"block", type:"ahc_continue"},
-      {kind:"block", type:"ahc_exit"},
-      {kind:"block", type:"ahc_wait"},
-    ]
+    {kind:"block", type:"program_header"},
+    {kind:"block", type:"ahc_if"},
+    {kind:"block", type:"ahc_while"},
+    {kind:"block", type:"ahc_break"},
+    {kind:"block", type:"ahc_continue"},
+    {kind:"block", type:"ahc_exit"},
+    {kind:"block", type:"ahc_wait"},
+  ];
 }

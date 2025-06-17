@@ -1,5 +1,6 @@
 import { Blocks, Events, FieldDropdown, FieldNumber, FieldTextInput } from "blockly";
 
+export const mathColor = 100;
 
 const operators = [
     ["*",2],
@@ -77,7 +78,7 @@ export function addStatementBlocks(){
       this.appendDummyInput().appendField(new FieldNumber(0, -Infinity, Infinity, 1), "VALUE");
       this.setInputsInline(false);
       this.setOutput(true, "Number");
-      this.setColour(230);
+      this.setColour(mathColor);
     }
   }
   Blocks['ahs_flag'] = {
@@ -85,7 +86,7 @@ export function addStatementBlocks(){
       this.appendDummyInput().appendField("F").appendField(new FieldTextInput("flag"), "NAME");
       this.setInputsInline(false);
       this.setOutput(true, ["Number","Settable"]);
-      this.setColour(230);
+      this.setColour(mathColor);
     }
   }
   Blocks['ahs_channel'] = {
@@ -93,7 +94,7 @@ export function addStatementBlocks(){
       this.appendDummyInput().appendField("@").appendField(new FieldTextInput("channel"), "NAME");
       this.setInputsInline(false);
       this.setOutput(true, ["Number","Settable"]);
-      this.setColour(230);
+      this.setColour(mathColor);
     }
   }
   Blocks['ahs_variable'] = {
@@ -101,17 +102,17 @@ export function addStatementBlocks(){
       this.appendDummyInput().appendField("$").appendField(new FieldTextInput("variable"), "NAME");
       this.setInputsInline(false);
       this.setOutput(true, ["Number","Settable"]);
-      this.setColour(230);
+      this.setColour(mathColor);
     }
   }
   Blocks['ahs_set'] = {
     init: function() {
-      this.appendValueInput("SET").setCheck("Settable").appendField("Set");
-      this.appendValueInput("VALUE").setCheck("Number").appendField("To");
+      this.appendValueInput("SET").setCheck("Settable").appendField("set");
+      this.appendValueInput("VALUE").setCheck("Number").appendField("to");
       this.setInputsInline(true);
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
-      this.setColour(230);
+      this.setColour(mathColor);
     }
   }
   Blocks['ahs_op'] = {
@@ -122,8 +123,8 @@ export function addStatementBlocks(){
 
       this.appendValueInput("ARG2").setCheck("Number");
       this.setInputsInline(true);
-      //this.setOutput(true, "Number");
-      this.setColour(230);
+      this.setOutput(true, "Number");
+      this.setColour(mathColor);
     }
   }
   Blocks['ahs_not'] = {
@@ -133,8 +134,8 @@ export function addStatementBlocks(){
 
       this.appendValueInput("ARG").setCheck("Number");
       this.setInputsInline(true);
-      //this.setOutput(true, "Number");
-      this.setColour(230);
+      this.setOutput(true, "Number");
+      this.setColour(mathColor);
     }
   }
 
