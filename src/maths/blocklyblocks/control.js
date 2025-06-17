@@ -1,4 +1,4 @@
-import { Blocks, FieldTextInput } from "blockly";
+import {Blocks, Events, FieldTextInput, Extensions} from "blockly";
 
 export const controlColor = 240;
 
@@ -23,6 +23,8 @@ export function addControlBlocks(){
       this.setNextStatement(true, "IF");
       this.setColour(controlColor);
       this.setTooltip("Execute the inner code if the provided condition is nonzero");
+
+      Extensions.apply('controls_if_mutator', this, true);
     }
   };
 
