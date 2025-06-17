@@ -28,7 +28,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('Channel');
             this.setHelpUrl('');
             this.setColour(0);
-            this.setOutput(true, 'Identifier');
+            this.setOutput(true, 'Settable');
         }
     },
     variable_identifier: {
@@ -38,7 +38,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('Variable');
             this.setHelpUrl('');
             this.setColour(100);
-            this.setOutput(true, 'Identifier');
+            this.setOutput(true, 'Settable');
         }
     },
     number: {
@@ -48,7 +48,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
-            this.setOutput(true, 'Number');
+            this.setOutput(true, 'Unsettable');
         }
     },
     time_since_trans: {
@@ -59,6 +59,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Unsettable');
         }
     },
     op: {
@@ -71,7 +72,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
-            this.setOutput(true, 'Number');
+            this.setOutput(true, 'Unsettable');
         }
     },
     not: {
@@ -82,12 +83,12 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
-            this.setOutput(true, 'Number');
+            this.setOutput(true, 'Unsettable');
         }
     },
     set: {
         init: function() {
-            this.appendValueInput('TO_SET').appendField('set').setCheck('Identifier');
+            this.appendValueInput('TO_SET').appendField('set').setCheck('Settable');
             this.appendValueInput('VALUE').appendField('to');
             this.setInputsInline(true)
             this.setPreviousStatement(true, null);
@@ -119,6 +120,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('Checks if the player has collected some berry');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Unsettable');
         }
     },
     set_flag: {
@@ -141,6 +143,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('Checks if some flag is true');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Unsettable');
         }
     },
     set_counter: {
@@ -163,6 +166,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Unsettable');
         }
     },
     set_coremode: {
@@ -184,6 +188,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Unsettable');
         }
     },
     get_player: {
@@ -201,6 +206,7 @@ Blockly.common.defineBlocks({
             this.setTooltip('');
             this.setHelpUrl('');
             this.setColour(225);
+            this.setOutput(true, 'Unsettable');
         }
     },
     kill_player: {
@@ -214,6 +220,58 @@ Blockly.common.defineBlocks({
             this.setColour(225);
         }
     },
+
+    yield: {
+        init: function() {
+            this.appendValueInput('MS').appendField('yield for');
+            this.appendDummyInput('').appendField('milliseconds');
+            this.setInputsInline(true)
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setTooltip('');
+            this.setHelpUrl('');
+            this.setColour(225);
+        }
+    },
+
+    while: {
+        init: function() {
+            this.appendValueInput('CONDITION').appendField('repeat while');
+            this.appendStatementInput('DO').appendField('do');
+            this.setInputsInline(true)
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setTooltip('');
+            this.setHelpUrl('');
+            this.setColour(225);
+        }
+    },
+    ...Blockly.common.createBlockDefinitionsFromJsonArray([
+        {
+            'type': 'if_meow',
+            'message0': 'if %1',
+            'args0': [
+                {
+                    'type': 'input_value',
+                    'name': 'IF0',
+                },
+            ],
+            'message1': 'do %1',
+            'args1': [
+                {
+                    'type': 'input_statement',
+                    'name': 'DO0',
+                },
+            ],
+            'previousStatement': null,
+            'nextStatement': null,
+            'style': 'logic_blocks',
+            'helpUrl': '',
+            'suppressPrefixSuffix': true,
+            'mutator': 'controls_if_mutator',
+            'extensions': ['controls_if_tooltip'],
+        }
+    ]),
 });
 
 const Order = {
@@ -232,24 +290,25 @@ generator.forBlock['variable_identifier'] = function(block) {
     return [`$${generator.getVariableName(block.getFieldValue('VARIABLE'))}`, Order.NONE];
 }
 generator.forBlock['number'] = function(block) {
-    return [block.getFieldValue('NUMBER')+"", Order.NONE];
+    return [(block.getFieldValue('NUMBER')||0)+"", Order.NONE];
 }
 generator.forBlock['time_since_trans'] = function(block) {
     return [statement("timeSinceTrans",false,[],[]), Order.NONE];
 }
 generator.forBlock['op'] = function(block) {
     const op=operators[block.getFieldValue('OPERATOR')];
-    return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)} ${op[0]} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)})`, Order.NONE];
+    return [`(${generator.valueToCode(block, 'OP1', Order.ATOMIC)||0} ${op[0]} ${generator.valueToCode(block, 'OP2', Order.ATOMIC)||0})`, Order.NONE];
 }
 generator.forBlock['not'] = function(block) {
-    return [`!(${generator.valueToCode(block, 'VALUE', Order.ATOMIC)})`, Order.NONE];
+    return [`!(${generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0})`, Order.NONE];
 }
 
 generator.forBlock['set'] = function(block) {
-    return `${generator.valueToCode(block, 'TO_SET', Order.ATOMIC)} = ${
-        generator.valueToCode(block, 'VALUE', Order.ATOMIC)};\n`;
+    const toSet = generator.valueToCode(block, 'TO_SET', Order.ATOMIC);
+    return !toSet?"":`${toSet} = ${
+        generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0};\n`;
 }
-generator.forBlock['print'] = function(block, generator) {
+generator.forBlock['print'] = function(block, generator) {//todo
     const values = [];
     for (let i = 0; i < block.itemCount_; i++) {
         const valueCode = generator.valueToCode(block, 'VALUE' + i,
@@ -265,7 +324,7 @@ generator.forBlock['print'] = function(block, generator) {
 generator.forBlock['has_berry'] = function(block) {
     return [statement("hasBerry", false,
         [generator.valueToCode(block, 'ROOM', Order.ATOMIC)],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)]), Order.NONE];
+        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]), Order.NONE];
 }
 generator.forBlock['get_flag'] = function(block) {
     return [statement("getFlag", false,
@@ -275,7 +334,7 @@ generator.forBlock['get_flag'] = function(block) {
 generator.forBlock['set_flag'] = function(block) {
     return statement("setFlag", true,
         [block.getFieldValue('FLAG')],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)]);
+        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]);
 }
 generator.forBlock['get_counter'] = function(block) {
     return [statement("getCounter", false,
@@ -285,7 +344,7 @@ generator.forBlock['get_counter'] = function(block) {
 generator.forBlock['set_counter'] = function(block) {
     return statement("setCounter", true,
         [block.getFieldValue('COUNTER')],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)]);
+        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]);
 }
 generator.forBlock['get_coremode'] = function(block) {
     return [statement("getCoreMode", false,
@@ -295,7 +354,7 @@ generator.forBlock['get_coremode'] = function(block) {
 generator.forBlock['set_coremode'] = function(block) {
     return statement("setCoreMode", true,
         [],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)]);
+        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]);
 }
 const propMap = {
     SPEEDX:[["speedx"]],
@@ -320,6 +379,33 @@ generator.forBlock['kill_player'] = function(block) {
         [],
         [generator.valueToCode(block, 'KILL', Order.ATOMIC), ...(block.getFieldValue('CUSTOMDIR')==="TRUE"?
             [Math.cos(angle_dir), Math.sin(angle_dir)] : [])]);
+}
+generator.forBlock['yield'] = function(block) {
+    return statement("yield", true,
+        [], [generator.valueToCode(block, '', Order.ATOMIC)||0]);
+}
+generator.forBlock['if_meow'] = function(block) {
+    // If/elseif/else condition. copied from https://github.com/google/blockly/blob/afe53c5194e13fc4356b240d9ff0652e74f7ed7c/generators/javascript/logic.ts
+
+    let n = 0;
+    let code = '';
+    do {
+        code +=`${n>0?"else ":""}if(${
+                generator.valueToCode(block, 'IF' + n, Order.NONE) || '0'}){\n${
+                generator.statementToCode(block, 'DO' + n)}}`;
+        n++;
+    } while (block.getInput('IF' + n));
+
+    if (block.getInput('ELSE')) {
+        code +=`else{\n${block.getInput('ELSE')
+            ? generator.statementToCode(block, 'ELSE')
+            : ''}}`;
+    }
+    return code + '\n';
+}
+generator.forBlock['while'] = function(block) {
+    return `while(${generator.valueToCode(block, 'CONDITION', Order.NONE) || "0"}){\n${
+        generator.statementToCode(block, 'DO')}}\n`;
 }
 
 document.getElementById("compileButton").addEventListener("click", ()=>
@@ -396,6 +482,18 @@ const toolbox = {
         {
             'kind': 'block',
             'type': 'kill_player'
+        },
+        {
+            'kind': 'block',
+            'type': 'yield'
+        },
+        {
+            'kind': 'block',
+            'type': 'if_meow'
+        },
+        {
+            'kind': 'block',
+            'type': 'while'
         },
     ]
 };
