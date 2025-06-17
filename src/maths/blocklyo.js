@@ -1,7 +1,8 @@
 import { Blocks, Generator, inject } from "blockly"
 import { pcomp } from "./intProg"
-import {addControlBlocks, controlColor} from "./blocklyblocks/control"
-import { addStatementBlocks, mathColor } from "./blocklyblocks/statement";
+import {addControlBlocks, controlColor} from "./blockly/control"
+import { addStatementBlocks, mathColor } from "./blockly/statement";
+import {addIngameBlocks, gameColor} from "./blockly/ingame.js";
 
 const tabs = [{
   content:addControlBlocks(),
@@ -11,6 +12,10 @@ const tabs = [{
   content:addStatementBlocks(),
   color:mathColor,
   label:"Math",
+},{
+  content:addIngameBlocks(),
+  color:gameColor,
+  label:"In-game",
 }]
 const toolbox = {
   kind: "flyoutToolbox",
