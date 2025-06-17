@@ -269,7 +269,7 @@ const escmap = {
   "(":")", "[":"]", "{":"}"
 }
 const closechars = new Set(Object.values(escmap))
-class IntProg{
+export class IntProg{
   constructor(text){
     this.using = {}
     this.usingctr = 0;
@@ -348,7 +348,7 @@ class IntProg{
 }
 
 
-const pcomp=(ex, bits=8)=>{
+export const pcomp=(ex, bits=8)=>{
   let a = window.lastprog = new IntProg(ex);
   let b=a.compile(8);
   const using = []

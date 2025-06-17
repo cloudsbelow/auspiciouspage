@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
-    "blockly": "^12.1.0"
+    "blockly": "^12.1.0",
+    "esbuild": "^0.25.5"
   }
 }

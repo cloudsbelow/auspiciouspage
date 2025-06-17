@@ -332,7 +332,7 @@ export const orderOfOps=[{
       }
       return s;
     }, mkinstrs:(s,reg,fn,instrs)=>{
-      const v=s.expr; let toks = v.match(TOKRE); let ops=v.match(/[\*\/\%]/g);
+      const v=s.expr; let toks = v.match(TOKRE); let ops=v.match(/[\x81\x82]/g);
       let narr = []; instrs.push(narr)
       startMaybeImmAcc(fn(toks[0]),narr);
       for(let i=0; i<ops.length; i++){
