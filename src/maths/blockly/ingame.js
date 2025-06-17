@@ -1,5 +1,6 @@
-import { Blocks, Events, FieldDropdown, FieldNumber, FieldTextInput } from "blockly";
+import { FieldDropdown, FieldCheckbox, FieldTextInput } from "blockly";
 import {simpleBlock, register} from "./utils.js";
+import {mathColor} from "./statement.js";
 
 export const gameColor = 350;
 
@@ -29,9 +30,43 @@ export function addIngameBlocks(){
         this.appendDummyInput('').appendField('coremode');
         this.setInputsInline(true)
         this.setOutput(true, null);
+        this.setTooltip('0 is cold, 1 is hot');
+        this.setHelpUrl('');
+        this.setOutput(true, 'Number');
+        this.setColour(gameColor);
+    }));
+    register("ahs_set_coremode", toReturn, simpleBlock(function() {
+        this.appendValueInput('VALUE').appendField('set coremode to');
+        this.setInputsInline(true)
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setTooltip('');
+        this.setHelpUrl('');
+        this.setColour(mathColor);
+    }));
+    register("ahs_get_player", toReturn, simpleBlock(function(){//todo: mutator
+        this.appendDummyInput('TEXT').appendField('get player property')
+            .appendField(new FieldDropdown([
+                ['x speed', 'SPEEDX'],
+                ['y speed', 'SPEEDY'],
+                ['x position', 'POSITIONX'],
+                ['y position', 'POSITIONY'],
+                ['number of dashes', 'DASHCOUNT'],
+                ['speed', 'SPEED'],
+            ]), 'TYPE');
+        this.setOutput(true, null);
         this.setTooltip('');
         this.setHelpUrl('');
         this.setOutput(true, 'Number');
+        this.setColour(gameColor);
+    }));
+    register("ahs_kill_player", toReturn, simpleBlock(function(){
+        this.appendValueInput('KILL').appendField('kill player if');
+        this.appendDummyInput('').appendField('custom direction?').appendField(new FieldCheckbox('TRUE'), 'CUSTOMDIR').appendField(new FieldAngle(0), 'DIR');
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setTooltip('');
+        this.setHelpUrl('');
         this.setColour(gameColor);
     }));
 
