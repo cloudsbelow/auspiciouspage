@@ -23,7 +23,7 @@ const tabs = [{
 }]
 const toolbox = {
   kind: "flyoutToolbox",
-  contents: []
+  contents: tabs[0]?.content??[]
 }
 const tabdiv = document.getElementById("categorySelector")
 let selected = null;

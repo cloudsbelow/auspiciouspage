@@ -12,6 +12,7 @@ export const currentLoadInfo = {
   saveinfo:"",
   getcur:null,
   setcur:null,
+  inmenus:0,
 }
 
 /**
@@ -43,6 +44,14 @@ function save(){
   localStorage.setItem(SAVELOADSTR+currentLoadInfo.savename, currentLoadInfo.saveinfo = currentLoadInfo.getcur());
 }
 document.getElementById("savebutton").onclick = save;
+window.addEventListener("beforeunload",()=>{
+  if(currentLoadInfo.saveinfo==currentLoadInfo.getcur()) return;
+  if(confirm("You have unsaved work. Save it?"))save();
+})
+keys.on.S.add((event)=>{
+  event.preventDefault();
+  if(event.ctrlKey && currentLoadInfo.inmenus == 0) save()
+})
 
 const loadcont = document.getElementById("loadcontainer")
 const lc = document.getElementById("loadcontents")
@@ -74,11 +83,13 @@ function closemenu(){
   lc.innerHTML="";
   loadcont.style.display="none";
   keys.on.Escape.delete(closemenu)
+  currentLoadInfo.inmenus=0
   if(justloaded) makenew();
   justloaded = false;
 }
 function load(){
   keys.on.Escape.add(closemenu)
+  currentLoadInfo.inmenus=1
   lc.innerHTML="";
   loadcont.style.display="block"
   for(let i=0; i<localStorage.length; i++){
