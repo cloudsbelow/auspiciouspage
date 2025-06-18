@@ -82,7 +82,6 @@ generator.forBlock['ahs_flag'] = function(block) {
         []), Order.ATOMIC];
 }
 generator.forBlock['ahs_set_flag'] = function(block) {
-    console.log("here");
     return statement("setFlag", true,
         [block.getFieldValue('FLAG')],
         [generator.valueToCode(block, 'VALUE', Order.NONE)||0]);
@@ -107,7 +106,7 @@ generator.forBlock['ahs_op'] = function(block) {
     return [`${generator.valueToCode(block, 'ARG1', oop)||0} ${op} ${generator.valueToCode(block, 'ARG2', oop)||0}`, oop];
 }
 generator.forBlock['ahs_not'] = function(block) {
-    return [`${generator.getFieldValue("NAME")}(${
+    return [`${block.getFieldValue("NAME")}(${
         generator.valueToCode(block, 'ARG', 1)||0})`, 1];
 }
 
