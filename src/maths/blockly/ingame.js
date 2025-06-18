@@ -1,6 +1,6 @@
-import { FieldDropdown, FieldCheckbox, FieldTextInput } from "blockly";
+import { FieldDropdown, FieldCheckbox, FieldTextInput, FieldNumber } from "blockly";
 import {simpleBlock, register} from "./utils.js";
-import {FieldAngle} from "@blockly/field-angle";
+//import {FieldAngle} from "@blockly/field-angle";
 
 export const gameColor = 350;
 
@@ -62,7 +62,7 @@ export function addIngameBlocks(){
     }));
     register("ahs_kill_player", toReturn, simpleBlock(function(){
         this.appendValueInput('KILL').appendField('kill player if')
-        this.appendDummyInput('').appendField('custom direction?').appendField(new FieldCheckbox('TRUE'), 'CUSTOMDIR').appendField(new FieldAngle(90), 'DIR');
+        this.appendDummyInput('').appendField('custom direction?').appendField(new FieldCheckbox('TRUE'), 'CUSTOMDIR').appendField(new FieldNumber(90), 'DIR');
         this.setInputsInline(false)
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);

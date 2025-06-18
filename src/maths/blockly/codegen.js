@@ -1,10 +1,11 @@
 import {Generator} from "blockly";
+import { operatorMap, operators } from "./statement";
 
 export const generator = new Generator('AuspiciousScript');
 
 const Order = {//TODO
     ATOMIC: 0,
-    NONE:1
+    NONE:999
 };
 function statement(name, nextLine, stringList, intList){
     return `${name}${stringList.length>0?`<${stringList}>`:""}(${intList})${!nextLine?"":";\n"}`
@@ -46,7 +47,7 @@ generator.forBlock['ahc_exit'] = function(block) {
     return `return;\n`;
 }
 generator.forBlock['ahc_wait'] = function(block) {
-    return statement("yield", true,
+    return statement("wait", true,
         [], [generator.valueToCode(block, 'CS', Order.ATOMIC)||0]);
 }
 
@@ -67,13 +68,13 @@ generator.forBlock['ahs_print'] = function(block, generator) {//todo
         values), Order.ATOMIC];
 }
 generator.forBlock['ahs_number'] = function(block) {
-    return [(block.getFieldValue('VALUE')||0)+"", Order.NONE];
+    return [(block.getFieldValue('VALUE')||0)+"", 0];
 }
 generator.forBlock['ahs_channel'] = function (block) {
-    return [`@${block.getFieldValue('NAME')}`, Order.NONE];
+    return [`@${block.getFieldValue('NAME')}`, 0];
 }
 generator.forBlock['ahs_variable'] = function(block) {
-    return [`$${generator.getVariableName(block.getFieldValue('NAME'))}`, Order.NONE];
+    return [`$${generator.getVariableName(block.getFieldValue('NAME'))}`, 0];
 }
 generator.forBlock['ahs_flag'] = function(block) {
     return [statement("getFlag", false,
@@ -81,9 +82,10 @@ generator.forBlock['ahs_flag'] = function(block) {
         []), Order.ATOMIC];
 }
 generator.forBlock['ahs_set_flag'] = function(block) {
+    console.log("here");
     return statement("setFlag", true,
         [block.getFieldValue('FLAG')],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]);
+        [generator.valueToCode(block, 'VALUE', Order.NONE)||0]);
 }
 generator.forBlock['ahs_counter'] = function(block) {
     return [statement("getCounter", false,
@@ -93,32 +95,32 @@ generator.forBlock['ahs_counter'] = function(block) {
 generator.forBlock['ahs_set_counter'] = function(block) {
     return statement("setCounter", true,
         [block.getFieldValue('COUNTER')],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]);
+        [generator.valueToCode(block, 'VALUE', Order.NONE)||0]);
 }
 generator.forBlock['ahs_set'] = function(block) {
-    const toSet = generator.valueToCode(block, 'SET', Order.ATOMIC);
+    const toSet = generator.valueToCode(block, 'SET', Order.NONE);
     return !toSet?"":`${toSet} = ${
-        generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0};\n`;
+        generator.valueToCode(block, 'VALUE', Order.NONE)||0};\n`;
 }
 generator.forBlock['ahs_op'] = function(block) {
-    const op=operators[block.getFieldValue('NAME')];
-    return [`(${generator.valueToCode(block, 'ARG1', Order.ATOMIC)||0} ${op[0]} ${generator.valueToCode(block, 'ARG2', Order.ATOMIC)||0})`, Order.NONE];
+    const [op, oop]=operatorMap[block.getFieldValue('NAME')];
+    return [`${generator.valueToCode(block, 'ARG1', oop)||0} ${op} ${generator.valueToCode(block, 'ARG2', oop)||0}`, oop];
 }
 generator.forBlock['ahs_not'] = function(block) {
     return [`${generator.getFieldValue("NAME")}(${
-        generator.valueToCode(block, 'ARG', Order.ATOMIC)||0})`, Order.NONE];
+        generator.valueToCode(block, 'ARG', 1)||0})`, 1];
 }
 
 ///### ingame
 
 generator.forBlock['ahs_time_since_trans'] = function(block) {
-    return [statement("timeSinceTrans",false,[],[]), Order.NONE];
+    return [statement("timeSinceTrans",false,[],[]), Order.ATOMIC];
 }
 
 generator.forBlock['ahs_has_berry'] = function(block) {
     return [statement("hasBerry", false,
         [generator.valueToCode(block, 'ROOM', Order.ATOMIC)],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]), Order.NONE];
+        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]), Order.ATOMIC];
 }
 generator.forBlock['ahs_get_coremode'] = function(block) {
     return [statement("getCoreMode", false,
@@ -128,7 +130,7 @@ generator.forBlock['ahs_get_coremode'] = function(block) {
 generator.forBlock['ahs_set_coremode'] = function(block) {
     return statement("setCoreMode", true,
         [],
-        [generator.valueToCode(block, 'VALUE', Order.ATOMIC)||0]);
+        [generator.valueToCode(block, 'VALUE', Order.NONE)||0]);
 }
 const propMap = {
     SPEEDX:[["speedx"]],
@@ -144,13 +146,13 @@ generator.forBlock['ahs_get_player'] = function(block) {
 
     return [statement("getPlayer", false,
         args[0],
-        args[1]||[]), Order.NONE];
+        args[1]||[]), Order.ATOMIC];
 }
 generator.forBlock['ahs_kill_player'] = function(block) {
     const angle_dir = block.getFieldValue('DIR');
 
     return statement("killPlayer", true,
         [],
-        [generator.valueToCode(block, 'KILL', Order.ATOMIC), ...(block.getFieldValue('CUSTOMDIR')==="TRUE"?
+        [generator.valueToCode(block, 'KILL', Order.NONE), ...(block.getFieldValue('CUSTOMDIR')==="TRUE"?
             [Math.cos(angle_dir), Math.sin(angle_dir)] : [])]);
 }

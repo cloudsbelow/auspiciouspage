@@ -23,10 +23,92 @@ export const operators = [
     ["&&", 10],
     ["||", 11],
 ];
+export const operatorMap = {}
+operators.forEach(x=>operatorMap[x[0]]=x)
 
 export function addStatementBlocks(){
   const toReturn = [];
+  register("ahs_number", toReturn, simpleBlock(function() {
+    this.appendDummyInput().appendField(new FieldNumber(0, -Infinity, Infinity, 1), "VALUE");
+    this.setInputsInline(false);
+    this.setOutput(true, "Unsettable");
+    this.setColour(mathColor);
+  }));
+  register("ahs_channel", toReturn, simpleBlock(function() {
+    this.appendDummyInput().appendField("@").appendField(new FieldTextInput("channel"), "NAME");
+    this.setInputsInline(false);
+    this.setOutput(true);
+    this.setColour(mathColor);
+  }));
+  register("ahs_variable", toReturn,simpleBlock(function() {
+    this.appendDummyInput().appendField("$").appendField(new FieldTextInput("variable"), "NAME");
+    this.setInputsInline(false);
+    this.setOutput(true);
+    this.setColour(mathColor);
+  }));
+  register("ahs_set", toReturn, simpleBlock(function() {
+    this.appendValueInput("SET").setCheck("Settable").appendField("set");
+    this.appendValueInput("VALUE").appendField("to");
+    this.setInputsInline(true);
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(mathColor);
+  }));
+  register("ahs_op", toReturn, simpleBlock(function() {
+    this.appendValueInput("ARG1")
+    this.appendDummyInput()
+      .appendField(new FieldDropdown(operators.map(x=>[x[0],x[0]])), "NAME");
 
+    this.appendValueInput("ARG2")
+    this.setInputsInline(true);
+    this.setOutput(true, "Unsettable");
+    this.setColour(mathColor);
+  }));
+  register("ahs_not", toReturn, simpleBlock(function() {
+    this.appendDummyInput()
+      .appendField(new FieldDropdown([["!","!"],["~","~"]]), "NAME");
+
+    this.appendValueInput("ARG");
+    this.setInputsInline(true);
+    this.setOutput(true, "Unsettable");
+    this.setColour(mathColor);
+  }));
+  register("ahs_flag", toReturn, simpleBlock(function() {
+    this.appendDummyInput().appendField("🚩").appendField(new FieldTextInput("flag"), "NAME");
+    this.setInputsInline(false);
+    this.setOutput(true, "Unsettable");
+    this.setColour(mathColor);
+  }));
+  register("ahs_set_flag", toReturn, simpleBlock(function() {
+    this.appendDummyInput('FLAG').appendField('set flag').appendField(new FieldTextInput('flag'), 'FLAG');
+    this.appendValueInput('VALUE').appendField('to');
+    this.setInputsInline(true)
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setTooltip('');
+    this.setHelpUrl('');
+    this.setColour(mathColor);
+  }));
+  register("ahs_counter", toReturn, simpleBlock(function(){
+    this.appendDummyInput('COUNTER').appendField(':').appendField(new FieldTextInput('counter'), 'COUNTER');
+    this.setInputsInline(true)
+    this.setOutput(true, null);
+    this.setTooltip('');
+    this.setHelpUrl('');
+    this.setOutput(true, 'Number');
+    this.setColour(mathColor);
+  }));
+  register("ahs_set_counter", toReturn, simpleBlock(function() {
+    this.appendDummyInput('COUNTER').appendField('set counter').appendField(new FieldTextInput('counter'), 'COUNTER');
+    this.appendValueInput('VALUE').appendField('to');
+    this.setInputsInline(true)
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setTooltip('');
+    this.setHelpUrl('');
+    this.setColour(mathColor);
+  }));
+  
   register("ahs_print", toReturn, {
     init: function() {
       this.appendDummyInput().appendField("print").appendField(new FieldTextInput("text"), "NAME");
@@ -76,86 +158,5 @@ export function addStatementBlocks(){
       }
     }
   });
-  register("ahs_number", toReturn, simpleBlock(function() {
-    this.appendDummyInput().appendField(new FieldNumber(0, -Infinity, Infinity, 1), "VALUE");
-    this.setInputsInline(false);
-    this.setOutput(true, "Unsettable");
-    this.setColour(mathColor);
-  }));
-  register("ahs_channel", toReturn, simpleBlock(function() {
-    this.appendDummyInput().appendField("@").appendField(new FieldTextInput("channel"), "NAME");
-    this.setInputsInline(false);
-    this.setOutput(true);
-    this.setColour(mathColor);
-  }));
-  register("ahs_variable", toReturn,simpleBlock(function() {
-    this.appendDummyInput().appendField("$").appendField(new FieldTextInput("variable"), "NAME");
-    this.setInputsInline(false);
-    this.setOutput(true);
-    this.setColour(mathColor);
-  }));
-  register("ahs_flag", toReturn, simpleBlock(function() {
-    this.appendDummyInput().appendField("🚩").appendField(new FieldTextInput("flag"), "NAME");
-    this.setInputsInline(false);
-    this.setOutput(true, "Unsettable");
-    this.setColour(mathColor);
-  }));
-  register("ahs_set_flag", toReturn, simpleBlock(function() {
-    this.appendDummyInput('FLAG').appendField('set flag').appendField(new FieldTextInput('flag'), 'FLAG');
-    this.appendValueInput('VALUE').appendField('to');
-    this.setInputsInline(true)
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setTooltip('');
-    this.setHelpUrl('');
-    this.setColour(mathColor);
-  }));
-  register("ahs_counter", toReturn, simpleBlock(function(){
-    this.appendDummyInput('COUNTER').appendField(':').appendField(new FieldTextInput('counter'), 'COUNTER');
-    this.setInputsInline(true)
-    this.setOutput(true, null);
-    this.setTooltip('');
-    this.setHelpUrl('');
-    this.setOutput(true, 'Number');
-    this.setColour(mathColor);
-  }));
-  register("ahs_set_counter", toReturn, simpleBlock(function() {
-    this.appendDummyInput('COUNTER').appendField('set counter').appendField(new FieldTextInput('counter'), 'COUNTER');
-    this.appendValueInput('VALUE').appendField('to');
-    this.setInputsInline(true)
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setTooltip('');
-    this.setHelpUrl('');
-    this.setColour(mathColor);
-  }));
-  register("ahs_set", toReturn, simpleBlock(function() {
-    this.appendValueInput("SET").setCheck("Settable").appendField("set");
-    this.appendValueInput("VALUE").appendField("to");
-    this.setInputsInline(true);
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(mathColor);
-  }));
-  register("ahs_op", toReturn, simpleBlock(function() {
-    this.appendValueInput("ARG1")
-    this.appendDummyInput()
-      .appendField(new FieldDropdown(operators.map(x=>[x[0],x[0]])), "NAME");
-
-    this.appendValueInput("ARG2")
-    this.setInputsInline(true);
-    this.setOutput(true, "Unsettable");
-    this.setColour(mathColor);
-  }));
-  register("ahs_not", toReturn, simpleBlock(function() {
-    this.appendDummyInput()
-      .appendField(new FieldDropdown([["!","!"],["~","~"]]), "NAME");
-
-    this.appendValueInput("ARG");
-    this.setInputsInline(true);
-    this.setOutput(true, "Unsettable");
-    this.setColour(mathColor);
-  }));
-
   return toReturn;
 }

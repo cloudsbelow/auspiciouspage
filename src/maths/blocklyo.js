@@ -1,16 +1,13 @@
 import { Blocks, Generator, inject, serialization } from "blockly"
 import { pcomp } from "./intProg"
-import { addControlBlocks } from "./blocklyblocks/control"
-import { addStatementBlocks } from "./blocklyblocks/statement";
 import { saveLoadSetup } from "./blockly/localstoragestuff.js";
 
 import {addControlBlocks, controlColor} from "./blockly/control"
 import { addStatementBlocks, mathColor } from "./blockly/statement";
 import {addIngameBlocks, gameColor} from "./blockly/ingame.js";
-import {registerFieldAngle} from "@blockly/field-angle";
 import {generator} from "./blockly/codegen.js"
 
-registerFieldAngle()
+
 const tabs = [{
   content:addControlBlocks(),
   color:controlColor,
