@@ -50,7 +50,7 @@ export class htmltemplate extends substituteTemplate{
   static alias={
     className:["classes"],classes:["classes"],cn:["classes"],class:["classes"],
     c:["c"],children:["c"],child:["c"],
-    id:["id"],
+    id:["id"], tc:["p", "textContent"],
     bg:["s","backgroundColor"],
     width:["s","width"], w:["s","width"],
     height:["s","height"], h:["s","height"],
@@ -59,6 +59,7 @@ export class htmltemplate extends substituteTemplate{
     e:["e"],elem:["e"],
     ref:["ref"],
     md:["p","onmousedown"],press:["p","onmousedown"],onpress:["p","onmousedown"],
+    click:["p","onclick"],
     wheel:["l","wheel"],
   }
   constructor(descr){

@@ -161,13 +161,13 @@ const pfuncs={
 
 const ParenEx = /(?:[a-zA-Z_][\w]*(?:\<[A-Za-z_]\w*(?:\,*[A-Za-z_]\w*)*\>)?)?/
 
-const orderOfOps=[{  
+const orderOfOps=[{
     remid:`(0x|0b)?\\d+`,
     pconst:(v,a)=>v.startsWith('0b')?parseInt(v,v.substring(2)):parseInt(v),
     mkinstrs: (s,reg,fn,instrs)=>instrs.push([codes.loadImmediateInt, reg, new IntWrapper(s.c)])
-  },{ 
+  },{
     re: /\@\w+(?:\[[^\]]*\])?/g
-  },{ 
+  },{
     re:PARENRE,
     pconst:(v,a)=>{
       if(v[0]=="(") return a.gsm(v.match(TOKRE)).c
@@ -188,7 +188,7 @@ const orderOfOps=[{
       else{
         let op = pfuncs[term]
         if(op) return op.mkinstrs(toks,reg,fn,instrs);
-        
+
         let strs = term.match(/[a-zA-Z_][\w]*/g)
         let expl = strs.length<=2 && toks.length<=2
         let sinstr = expl?[codes["iop"+'s'.repeat(strs.length)+'i'.repeat(toks.length)],reg]:
@@ -205,7 +205,7 @@ const orderOfOps=[{
     canUseImm: (v)=>{
       return pfuncs[v.match(ParenEx)[0]]?.canimm === true;
     }
-  },{ 
+  },{
     remid:`[\\!\\~]${TOK}`,ndelim:"\\!\\~",
     pconst:(v,a)=>{
       if(v[0]=='!')return a.gsm(v.substring(1)).c==0?1:0
@@ -302,7 +302,7 @@ const orderOfOps=[{
     }
   },{
     remid:`(${TOK}\\&)+${TOK}`,ndelim:"\\&",
-    pconst:(v,a)=>v.match(TOKRE).reduce((x,y)=>x&a.gsm(y).c, -1), 
+    pconst:(v,a)=>v.match(TOKRE).reduce((x,y)=>x&a.gsm(y).c, -1),
     mkinstrs:doSimpleAcc.bind(null,"and"),
   },{
     remid:`(${TOK}\\^)+${TOK}`,ndelim:"\\^",
@@ -347,7 +347,7 @@ function keyIntersect(...o){
 class IntEx{
   constructor(text){
     this.symmap={}
-    this.microt = {} 
+    this.microt = {}
     this.macrot = {}
     this.using = []
     this.emitting = []
@@ -440,7 +440,7 @@ function reverseObj(o){
   return r;
 }
 IntEx.prototype.compileout = function(bits=8,verbose=false){
-  
+
   const lastused = {}
   const queue = []
   const tobase = (m)=>m[0]=="$"?this.macrot[m].s:m;
@@ -555,7 +555,7 @@ function toB64(a){
   }
   return str.substring(0,str.length-pad)+"==".substring(0,pad);
 }
-const qcomp=(ex, bits=8)=>{
+window.qcomp=(ex, bits=8)=>{
   let a = new IntEx(ex);
   if(a == null){
     alert("failed");
@@ -582,7 +582,7 @@ const qcomp=(ex, bits=8)=>{
   return toB64(b_cc(...c));
 }
 
-const e = document?.getElementById("Compileplease") 
+const e = document?.getElementById("Compileplease")
 if(e)e.onclick = ()=>{
   let s;
   try{
@@ -592,16 +592,15 @@ if(e)e.onclick = ()=>{
     alert("Failed. The error was "+err+" (look in dev console for more detail maybe)"); throw(err);
   }
 }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+
+
