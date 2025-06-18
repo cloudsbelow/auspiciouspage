@@ -30,7 +30,7 @@ export function addControlBlocks(){
 
       ocont.style.display = "block";
       const nextBlock = this.nextConnection && this.nextConnection.targetBlock();
-      const nextCode = genout.innerText = generator.blockToCode(nextBlock);
+      const nextCode = window.lastgenerated = genout.innerText = generator.blockToCode(nextBlock);
       console.log(nextCode)
       lastasm = compiledout.innerText = pcomp(nextCode);
       keys.on.Escape.add(closeOutput);
