@@ -154,5 +154,5 @@ generator.forBlock['ahs_kill_player'] = function(block) {
     return statement("killPlayer", true,
         [],
         [generator.valueToCode(block, 'KILL', Order.NONE)||0, ...(block.getFieldValue('CUSTOMDIR')==="TRUE"?
-            [Math.cos(angle_dir), Math.sin(angle_dir)] : [])]);
+            [Math.round(Math.cos(angle_dir)*10), Math.round(Math.sin(angle_dir)*10)] : [])]);
 }
