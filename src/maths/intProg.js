@@ -369,7 +369,3 @@ export const pcomp=(ex, bits=8)=>{
   console.log(c);
   return toB64(b_cc(...c));
 }
-window.pcomp = pcomp;
-window.IntProg = IntProg;
-window.enums = enums
-window.b_cc = b_cc

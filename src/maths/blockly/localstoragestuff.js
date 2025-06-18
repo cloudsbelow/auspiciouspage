@@ -6,7 +6,7 @@ import { keys } from "../../util/util.js";
 const SAVELOADSTR="ahmc_"
 const namebar = document.getElementById("namebar")
 
-
+let justloaded = true;
 export const currentLoadInfo = {
   savename:"",
   saveinfo:"",
@@ -66,14 +66,16 @@ class loadItem{
     currentLoadInfo.savename=namebar.innerText=this.name;
     currentLoadInfo.saveinfo=localStorage.getItem(SAVELOADSTR+this.name)
     currentLoadInfo.setcur(currentLoadInfo.saveinfo)
+    justloaded=false;
     closemenu()
   }
 }
 function closemenu(){
-  console.log("here")
   lc.innerHTML="";
   loadcont.style.display="none";
   keys.on.Escape.delete(closemenu)
+  if(justloaded) makenew();
+  justloaded = false;
 }
 function load(){
   keys.on.Escape.add(closemenu)
@@ -88,24 +90,24 @@ function load(){
 }
 load()
 document.getElementById("loadbutton").onclick = load;
-document.getElementById("clickthrublocker").onclick = closemenu;
+document.getElementById("clickthrublocker1").onclick = closemenu;
 window.load = load;
 
-document.getElementById("loadmenuNewbutton").onclick = function(){
-  closemenu()
+function makenew(){
   currentLoadInfo.setcur(currentLoadInfo.saveinfo = "{}")
   namebar.innerText="Untitled"
   namebar.classList.add("unnamed")
   currentLoadInfo.savename=""
 }
+document.getElementById("loadmenuNewbutton").onclick = function(){
+  closemenu()
+  makenew()
+}
 document.getElementById("newbutton").onclick = function(){
   if(currentLoadInfo.saveinfo!=currentLoadInfo.getcur()){
     if(confirm("You have unsaved work. Would you like to save it?")) save();
   }
-  currentLoadInfo.setcur(currentLoadInfo.saveinfo = "{}")
-  namebar.innerText="Untitled"
-  namebar.classList.add("unnamed")
-  currentLoadInfo.savename=""
+  makenew();
 }
 
 namebar.onclick = function(){

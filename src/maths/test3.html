@@ -102,8 +102,7 @@
       box-shadow: 3px 2px 10px -2px rgba(0,0,0,1);
     }
     #loadcontents{
-      border-left:5px solid white;
-      overflow-y: scroll;
+      overflow-y: auto;
       overflow-x: hidden;
       height: calc(100% - 80px);
       margin: 10px 20px;
@@ -131,11 +130,48 @@
       background-color: red;
       padding:0px 15px;
     }
-    #clickthrublocker{
+    .clickthrublocker{
       z-index: 999;
       position:fixed;
       left:0px; right:0px; top:0px; bottom:0px;
       backdrop-filter: blur(8px);
+    }
+
+    #outputcontainer{
+      display: none;
+    }
+    #outputmenu{
+      z-index: 1000;
+      position:fixed;
+      --hwidth:max(min(250px, 45vw), min(400px, 35vw));
+      width:calc(2 * var(--hwidth));
+      height: 90vh;
+      left:calc(50vw - var(--hwidth));
+      top:5vh;
+      background-color: var(--dark);
+      box-shadow: 3px 2px 10px -2px rgba(0,0,0,1);
+      color:white;
+      padding-top:15px;
+    }
+    #outputmenu p{
+      margin-left:50px;
+    }
+    #outputmenu div{
+      margin:0px 20px;
+      margin-top:-15px;
+      height:calc(50% - 90px);
+      background-color: red;
+      background-color: var(--mid);
+      padding:5px 15px 15px;
+      box-shadow: inset 3px 2px 10px -2px rgba(0,0,0,1);
+      overflow-y: auto;
+      overflow-x: hidden;     /* no horizontal scroll */
+      white-space: normal;    /* allow wrapping */
+      word-wrap: break-word;  /* legacy support */
+      overflow-wrap: break-word; /* modern standard */
+    }
+    #outputmenu button{
+      margin-left: 20px;
     }
 
     .blocklyMainBackground {
@@ -144,12 +180,20 @@
     .blocklyFlyoutBackground {
       fill: var(--mid) !important;
     }
+
+    .noselect, #saveloaditems div, #categorySelector div{
+      user-select: none;          /* Standard */
+      -webkit-user-select: none;  /* Chrome/Safari */
+      -moz-user-select: none;     /* Firefox */
+      -ms-user-select: none;      /* IE/Edge */
+      cursor: pointer;            /* Optional: makes it look like a button */
+    }
   </style>
 </head>
 <body>
   <div id="header">
     <div class="tab-bar" id="categorySelector"></div>
-    <h1 id="namebar"></h1>
+    <h1 id="namebar" class="noselect"></h1>
     <div id="saveloaditems">
       <div id="savebutton">save</div>
       <div id="newbutton">new</div>
@@ -158,13 +202,23 @@
   </div>
   <div id="blocklyDiv"></div>
   <div id="loadcontainer">
-    <div id="clickthrublocker"></div>
+    <div class="clickthrublocker" id="clickthrublocker1"></div>
     <div id="loadmenu">
       <div style="display:flex; justify-content: space-between; color:white; padding: 0px 20px;">
         <h2 style="margin-left: 15px;">Load Script</h2>
         <h2 style="margin-right:15px" id="loadmenuNewbutton">New</h2>
       </div>
       <div id="loadcontents"></div>
+    </div>
+  </div>
+  <div id="outputcontainer">
+    <div class="clickthrublocker" id="clickthrublocker2"></div>
+    <div id="outputmenu">
+      <p>Generated program:</p>
+      <div id="generatedtext"></div>
+      <p>Compiled:</p>
+      <div id="compiled"></div>
+      <button id="copybutton">Copy to clipboard</button>
     </div>
   </div>
 </body>

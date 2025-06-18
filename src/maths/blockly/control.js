@@ -1,9 +1,26 @@
 import {Blocks, Events, FieldTextInput, Extensions, FieldImage} from "blockly";
 import {simpleBlock} from "./utils.js";
 import {generator} from "./codegen.js";
+import { pcomp } from "../intProg.js";
+import { keys } from "../../util/util.js";
 
 export const controlColor = 240;
 const compileButtonPath = "/src/maths/blockly/compile.svg";
+
+function closeOutput(){
+  keys.on.Escape.delete(closeOutput);
+  ocont.style.display="none"
+}
+
+let lastasm=""
+const ocont = document.getElementById("outputcontainer")
+document.getElementById("clickthrublocker2").onclick = closeOutput;
+const genout = document.getElementById("generatedtext")
+const compiledout = document.getElementById("compiled")
+document.getElementById("copybutton").onclick = ()=>{
+  navigator.clipboard.writeText(lastasm); alert("done");
+}
+
 
 export function addControlBlocks(){
   Blocks['program_header'] = simpleBlock(function() {
@@ -11,10 +28,12 @@ export function addControlBlocks(){
     this.appendDummyInput('').appendField('routine block').appendField(new FieldTextInput(''), '');
     this.appendDummyInput('').appendField(new FieldImage(compileButtonPath, 90, 30, "", ()=>{
 
-      console.log("compile")
+      ocont.style.display = "block";
       const nextBlock = this.nextConnection && this.nextConnection.targetBlock();
-      const nextCode = generator.blockToCode(nextBlock);
+      const nextCode = genout.innerText = generator.blockToCode(nextBlock);
       console.log(nextCode)
+      lastasm = compiledout.innerText = pcomp(nextCode);
+      keys.on.Escape.add(closeOutput);
     }, false, {
 
     }), '');

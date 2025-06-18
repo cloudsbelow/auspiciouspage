@@ -1,4 +1,4 @@
-import { Blocks, Generator, inject, serialization } from "blockly"
+import { Blocks, Generator, inject, Names, serialization } from "blockly"
 import { pcomp } from "./intProg"
 import { saveLoadSetup } from "./blockly/localstoragestuff.js";
 
@@ -47,6 +47,7 @@ const container = document.getElementById("blocklyDiv")
 var workspace = inject(container, {
   toolbox:toolbox,
   trashcan: true,
+  move:{drag:true, scrollbars:true, wheel:true}
 })
 saveLoadSetup(()=>{
   return JSON.stringify(serialization.workspaces.save(workspace))
@@ -55,16 +56,9 @@ saveLoadSetup(()=>{
 });
 
 
-
-
-//this loads the workspace?
-Blockly.Events.disable();
-Blockly.serialization.workspaces.load({}, workspace, false);
-Blockly.Events.enable();
-
 generator.init(workspace);
-generator.nameDB_ = new Blockly.Names();
-generator.nameDB_.setVariableMap(workspace.getVariableMap());
+generator.nameDB_ = new Names();
+//generator.nameDB_.setVariableMap(workspace.getVariableMap());
 //if there are any reserved variables (i dont think there are) they should go here
 generator.scrub_ = (block, code, thisOnly = false) => {
   const nextBlock = block.nextConnection && block.nextConnection.targetBlock();
