@@ -3,7 +3,7 @@ import {simpleBlock, register} from "./utils.js";
 
 export const mathColor = 100;
 
-const operators = [
+export const operators = [
     ["*",2],
     ["/",2],
     ["%",2],

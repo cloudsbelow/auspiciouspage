@@ -45,7 +45,7 @@ export function addIngameBlocks(){
         this.setColour(gameColor);
     }));
     register("ahs_get_player", toReturn, simpleBlock(function(){//todo: mutator
-        this.appendDummyInput('TEXT').appendField('get player property')
+        this.appendDummyInput('').appendField('get player property')
             .appendField(new FieldDropdown([
                 ['x speed', 'SPEEDX'],
                 ['y speed', 'SPEEDY'],
@@ -61,8 +61,9 @@ export function addIngameBlocks(){
         this.setColour(gameColor);
     }));
     register("ahs_kill_player", toReturn, simpleBlock(function(){
-        this.appendValueInput('KILL').appendField('kill player if');
+        this.appendValueInput('KILL').appendField('kill player if')
         this.appendDummyInput('').appendField('custom direction?').appendField(new FieldCheckbox('TRUE'), 'CUSTOMDIR').appendField(new FieldAngle(90), 'DIR');
+        this.setInputsInline(false)
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
         this.setTooltip('');

@@ -8,6 +8,7 @@ import {addControlBlocks, controlColor} from "./blockly/control"
 import { addStatementBlocks, mathColor } from "./blockly/statement";
 import {addIngameBlocks, gameColor} from "./blockly/ingame.js";
 import {registerFieldAngle} from "@blockly/field-angle";
+import {generator} from "./blockly/codegen.js"
 
 registerFieldAngle()
 const tabs = [{
@@ -59,4 +60,17 @@ saveLoadSetup(()=>{
 
 
 
-export const generator = new Generator('AuspiciousScript');
+//this loads the workspace?
+Blockly.Events.disable();
+Blockly.serialization.workspaces.load({}, workspace, false);
+Blockly.Events.enable();
+
+generator.init(workspace);
+generator.nameDB_ = new Blockly.Names();
+generator.nameDB_.setVariableMap(workspace.getVariableMap());
+//if there are any reserved variables (i dont think there are) they should go here
+generator.scrub_ = (block, code, thisOnly = false) => {
+  const nextBlock = block.nextConnection && block.nextConnection.targetBlock();
+  const nextCode = thisOnly ? '' : generator.blockToCode(nextBlock);
+  return code + nextCode;
+}

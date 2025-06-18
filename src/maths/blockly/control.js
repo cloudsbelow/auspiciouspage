@@ -1,5 +1,6 @@
 import {Blocks, Events, FieldTextInput, Extensions, FieldImage} from "blockly";
 import {simpleBlock} from "./utils.js";
+import {generator} from "./codegen.js";
 
 export const controlColor = 240;
 const compileButtonPath = "/src/maths/blockly/compile.svg";
@@ -13,7 +14,7 @@ export function addControlBlocks(){
       console.log("compile")
       const nextBlock = this.nextConnection && this.nextConnection.targetBlock();
       const nextCode = generator.blockToCode(nextBlock);
-
+      console.log(nextCode)
     }, false, {
 
     }), '');
@@ -24,10 +25,10 @@ export function addControlBlocks(){
   });
 
   Blocks['ahc_if'] = simpleBlock(function() {
-    this.appendValueInput("CONDITION0").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("if");
-    this.appendStatementInput("CODE0").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("do");
+    this.appendValueInput("IF0").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("if");
+    this.appendStatementInput("DO0").setCheck(null).setAlign(Blockly.ALIGN_RIGHT).appendField("do");
     this.setPreviousStatement(true, null);
-    this.setNextStatement(true, "IF");
+    this.setNextStatement(true, null);
     this.setColour(controlColor);
     this.setTooltip("Execute the inner code if the provided condition is nonzero");
 
@@ -82,9 +83,7 @@ export function addControlBlocks(){
     this.setTooltip("Exit the program");
   });
   Blocks['ahc_wait'] = simpleBlock(function() {
-    this.appendValueInput("a")
-        .setCheck(null)
-        .appendField("wait");
+    this.appendValueInput("CS").setCheck(null).appendField("wait");
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(controlColor);
