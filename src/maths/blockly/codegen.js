@@ -1,18 +1,15 @@
 import {Generator} from "blockly";
 import { operatorMap, operators } from "./statement";
+import { statement, generator } from "./utils";
 
-export const generator = new Generator('AuspiciousScript');
 
 const Order = {//TODO
     ATOMIC: 0,
     NONE:999
 };
-function statement(name, nextLine, stringList, intList){
-    return `${name}${stringList.length>0?`<${stringList}>`:""}(${intList})${!nextLine?"":";\n"}`
-}
 
 //### control
-
+export function initGen(){
 generator.forBlock["program_header"] = _=>"";
 generator.forBlock['ahc_if'] = function(block) {
     // If/elseif/else condition. copied from https://github.com/google/blockly/blob/afe53c5194e13fc4356b240d9ff0652e74f7ed7c/generators/javascript/logic.ts
@@ -74,7 +71,7 @@ generator.forBlock['ahs_channel'] = function (block) {
     return [`@${block.getFieldValue('NAME')}`, 0];
 }
 generator.forBlock['ahs_variable'] = function(block) {
-    return [`$${generator.getVariableName(block.getFieldValue('NAME'))}`, 0];
+    return [`$${block.getFieldValue('NAME')}`, 0];
 }
 generator.forBlock['ahs_flag'] = function(block) {
     return [statement("getFlag", false,
@@ -154,4 +151,5 @@ generator.forBlock['ahs_kill_player'] = function(block) {
         [],
         [generator.valueToCode(block, 'KILL', Order.NONE)||0, ...(block.getFieldValue('CUSTOMDIR')==="TRUE"?
             [Math.round(Math.cos(angle_dir)*10), Math.round(Math.sin(angle_dir)*10)] : [])]);
+}
 }

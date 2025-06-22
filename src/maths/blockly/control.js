@@ -1,6 +1,5 @@
 import {Blocks, Events, FieldTextInput, Extensions, FieldImage} from "blockly";
-import {simpleBlock} from "./utils.js";
-import {generator} from "./codegen.js";
+import {simpleBlock, generator} from "./utils.js";
 import { pcomp } from "../intProg.js";
 import { keys } from "../../util/util.js";
 
@@ -27,13 +26,14 @@ export function addControlBlocks(){
     this.hat = "cap"
     this.appendDummyInput('').appendField('routine block').appendField(new FieldTextInput(''), '');
     this.appendDummyInput('').appendField(new FieldImage(compileButtonPath, 90, 30, "", ()=>{
-
-      ocont.style.display = "block";
-      const nextBlock = this.nextConnection && this.nextConnection.targetBlock();
-      const nextCode = window.lastgenerated = genout.innerText = generator.blockToCode(nextBlock);
-      console.log(nextCode)
-      lastasm = compiledout.innerText = pcomp(nextCode);
-      keys.on.Escape.add(closeOutput);
+      try{
+        ocont.style.display = "block";
+        const nextBlock = this.nextConnection && this.nextConnection.targetBlock();
+        const nextCode = window.lastgenerated = genout.innerText = generator.blockToCode(nextBlock);
+        console.log(nextCode)
+        lastasm = compiledout.innerText = pcomp(nextCode);
+        keys.on.Escape.add(closeOutput);
+      } catch(ex){alert('Some error occured:\n'+ex);console.error(ex)}
     }, false, {
 
     }), '');
