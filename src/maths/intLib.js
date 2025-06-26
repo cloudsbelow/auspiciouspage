@@ -1,11 +1,28 @@
 export const TOK = '([#$]\\w+)'; //([@#%]\w+|&#?\w+&#?\w+)
 export const TOKRE = new RegExp(TOK,'g');
 //const PARENRE = new RegExp(`[a-z]*\\(${TOK}(,${TOK})*\\)`,'g')
+
+export const MAXDEPTH = 2000;
+export const stringRegistry = {
+  _markingChar:'\x90',
+  _markingRe:'\\x90',
+  _ctr:0,
+  _clear:function(){
+    Array.from(Object.keys(stringRegistry)).forEach(x=>{
+      if(x[0]===stringRegistry._markingChar) delete stringRegistry[x]
+    })
+    stringRegistry._ctr=0;
+  },
+  _wrap:function(str){
+    let replacement = stringRegistry._markingChar+(++stringRegistry._ctr)
+    stringRegistry[replacement]=str.substring(1,str.length-1)
+    return replacement
+  }
+}
 export const PARENRE = new RegExp(
-  '(?:[a-zA-Z_][\\w]*(?:\\<[A-Za-z_]\\w*(?:\\,*[A-Za-z_]\\w*)*\\>)?)?'+
+  `(?:[a-zA-Z_][\\w]*(?:\\<[A-Za-z_${stringRegistry._markingRe}]\\w*(?:\\,*[A-Za-z_${stringRegistry._markingRe}]\\w*)*\\>)?)?`+
   `\\((${TOK}(,${TOK})*)?\\)`, 'g'
 )
-export const MAXDEPTH = 2000;
 
 export const ValueWrapper = function(v){this.v=v}
 Object.setPrototypeOf(ValueWrapper.prototype,null)
@@ -13,10 +30,15 @@ ValueWrapper.prototype.valueOf = ()=>0
 ValueWrapper.prototype.arrAppend = function(arr, bits){
   throw new Error("not implemented")
 }
-export const StringWrapper = function(v){ValueWrapper.call(this,v)}
+export const StringWrapper = function(v){ValueWrapper.call(this,v[0]===stringRegistry._markingChar?stringRegistry[v]:v)}
 StringWrapper.prototype=Object.create(ValueWrapper.prototype)
 StringWrapper.prototype.arrAppend = function(arr,bits=8){
-  if(bits == 8) for(let i=0; i<this.v.length; i++)arr.push(this.v.charCodeAt(i));
+  if(bits == 8){
+    if(this.v == undefined) throw new Error("null/invalid string")
+    if(this.v.length>255) throw new Error("string too long: "+this.v);
+    arr.push(this.v.length)
+    for(let i=0; i<this.v.length; i++)arr.push(this.v.charCodeAt(i));
+  }
   else throw Error();
 }
 export const IntWrapper = function(v){ValueWrapper.call(this,v)}
@@ -221,7 +243,7 @@ const pfuncs={
   }
 }
 
-const ParenEx = /(?:[a-zA-Z_][\w]*(?:\<[A-Za-z_]\w*(?:\,*[A-Za-z_]\w*)*\>)?)?/
+const ParenEx = new RegExp(`(?:[a-zA-Z_][\\w]*(?:\\<[A-Za-z_${stringRegistry._markingRe}]\\w*(?:\\,*[A-Za-z_${stringRegistry._markingRe}]\\w*)*\\>)?)?`)
 
 export const orderOfOps=[{  
     remid:`(0x|0b)?\\d+`,
@@ -250,13 +272,12 @@ export const orderOfOps=[{
       else{
         let op = pfuncs[term]
         if(op) return op.mkinstrs(toks,reg,fn,instrs);
-        
-        let strs = term.match(/[a-zA-Z_][\w]*/g)
+        let strs = term.match(new RegExp(`[a-zA-Z_\\x90]\\w*`,'g'))
         let expl = strs.length<=2 && toks.length<=2
         let sinstr = expl?[codes["iop"+'s'.repeat(strs.length)+'i'.repeat(toks.length)],reg]:
           [codes["iopvsvi"],reg,new ImmUintWrapper(strs.length),new ImmUintWrapper(toks.length)]
         for(let str of strs){
-          sinstr.push(new ImmUintWrapper(str.length),new StringWrapper(str));
+          sinstr.push(new StringWrapper(str));
         }
         for(let tok of toks){
           sinstr.push(fn(tok)[0])

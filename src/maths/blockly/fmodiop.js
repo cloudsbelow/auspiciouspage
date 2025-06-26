@@ -1,5 +1,5 @@
 import { FieldTextInput } from "blockly";
-import { generator, register, simpleBlock, statement } from "./utils";
+import { generator, register, simpleBlock, statement,quoted } from "./utils";
 
 
 
@@ -21,10 +21,10 @@ export function registerFmodBlocks(){
     this.setNextStatement(true, null);
     this.setColour(fmodColor);
   },function(block){
-    var strs = [block.getFieldValue('EV')]
+    var strs = [quoted(block.getFieldValue('EV'))]
     var ent = block.getFieldValue('ENT')
     if(ent!='this') strs.push(ent)
-    return [statement("fmodPlay",true,strs,[]),0]
+    return [statement("fmodP",true,strs,[]),0]
   })
   reg("aha_PlayInline",function(){
     this.appendDummyInput('').appendField('Play event').appendField(new FieldTextInput('event:/'),'EV').appendField('at marked entity').appendField(new FieldTextInput('this'),'ENT');
@@ -34,10 +34,10 @@ export function registerFmodBlocks(){
     this.setOutput(true, 'Number');
     this.setColour(fmodColor);
   },function(block){
-    var strs = [block.getFieldValue('EV')]
+    var strs = [quoted(block.getFieldValue('EV'))]
     var ent = block.getFieldValue('ENT')
     if(ent!='this') strs.push(ent)
-    return [statement("fmodPlay",false,strs,[]),0]
+    return [statement("fmodP",false,strs,[]),0]
   })
   reg("aha_SetParam",function(){
     this.appendDummyInput('').appendField('Set param').appendField(new FieldTextInput('param'),'PARAM')
@@ -49,9 +49,9 @@ export function registerFmodBlocks(){
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(fmodColor);
-  },(b)=>[statement("fmodParamS",true,
-    [b.getFieldValue('PARAM')],
-    [generator.valueToCode(b,"EV"),generator.valueToCode(b,"VALUE",999)]),0])
+  },(b)=>statement("fmodPS",true,
+    [quoted(b.getFieldValue('PARAM'))],
+    [generator.valueToCode(b,"EV",999),generator.valueToCode(b,"VALUE",999)]))
   reg("aha_GetParam",function(){
     this.appendDummyInput('').appendField('Get param').appendField(new FieldTextInput('param'),'PARAM')
     this.appendValueInput('EV').appendField('of event')
@@ -60,8 +60,8 @@ export function registerFmodBlocks(){
     this.setHelpUrl('');
     this.setOutput(true, 'Number');
     this.setColour(fmodColor);
-  },(b)=>[statement("fmodParamG",false,
-    [b.getFieldValue('PARAM')],[generator.valueToCode(b,"EV")]),0])
+  },(b)=>[statement("fmodPG",false,
+    [quoted(b.getFieldValue('PARAM'))],[generator.valueToCode(b,"EV",999)]),0])
   reg("aha_GetParamFinal",function(){
     this.appendDummyInput('').appendField('Get param (final)').appendField(new FieldTextInput('param'),'PARAM')
     this.appendValueInput('EV').appendField('of event')
@@ -70,8 +70,8 @@ export function registerFmodBlocks(){
     this.setHelpUrl('');
     this.setOutput(true, 'Number');
     this.setColour(fmodColor);
-  },(b)=>[statement("fmodParamF",false,
-    [b.getFieldValue('PARAM')],[generator.valueToCode(b,"EV")]),0])
+  },(b)=>[statement("fmodPF",false,
+    [quoted(b.getFieldValue('PARAM'))],[generator.valueToCode(b,"EV",999)]),0])
   reg("aha_Stop",function(){
     this.appendValueInput('EV').appendField('Stop event')
     this.setInputsInline(true)
@@ -80,7 +80,7 @@ export function registerFmodBlocks(){
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(fmodColor);
-  },(b)=>[statement("fmodStop",true,[],[generator.valueToCode(b,"EV")]),0])
+  },(b)=>statement("fmodS",true,[],[generator.valueToCode(b,"EV",999)]))
   reg("aha_Trust",function(){
     this.appendValueInput('EV').appendField('Trust event')
     this.setInputsInline(true)
@@ -89,6 +89,30 @@ export function registerFmodBlocks(){
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(fmodColor);
-  },(b)=>[statement("fmodTrust",true,[],[generator.valueToCode(b,"EV")]),0])
+  },(b)=>statement("fmodC",true,[],[generator.valueToCode(b,"EV",999)]))
+  reg("aha_SetVolume",function(){
+    this.appendValueInput('EV').appendField('Set volume of')
+    this.appendValueInput('VALUE').appendField('to')
+    this.setInputsInline(true)
+    this.setTooltip('Set the volume position of the audio event to given value in percent');
+    this.setHelpUrl('');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(fmodColor);
+  },(b)=>statement("fmodV",true,
+    [],
+    [generator.valueToCode(b,"EV",999),generator.valueToCode(b,"VALUE",999)]))
+  reg("aha_SetTimeline",function(){
+    this.appendValueInput('EV').appendField('Set timeline position of')
+    this.appendValueInput('VALUE').appendField('to')
+    this.setInputsInline(true)
+    this.setTooltip('Set the timeline position of the audio event to given value in miliseconds');
+    this.setHelpUrl('');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(fmodColor);
+  },(b)=>statement("fmodT",true,
+    [],
+    [generator.valueToCode(b,"EV",999),generator.valueToCode(b,"VALUE",999)]))
   return res
 }

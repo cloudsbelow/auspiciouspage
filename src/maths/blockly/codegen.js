@@ -1,6 +1,6 @@
 import {Generator} from "blockly";
 import { operatorMap, operators } from "./statement";
-import { statement, generator } from "./utils";
+import { statement, generator, quoted } from "./utils";
 
 
 const Order = {//TODO
@@ -75,22 +75,22 @@ generator.forBlock['ahs_variable'] = function(block) {
 }
 generator.forBlock['ahs_flag'] = function(block) {
     return [statement("getFlag", false,
-        [block.getFieldValue('NAME')],
+        [quoted(block.getFieldValue('NAME'))],
         []), Order.ATOMIC];
 }
 generator.forBlock['ahs_set_flag'] = function(block) {
     return statement("setFlag", true,
-        [block.getFieldValue('FLAG')],
+        [quoted(block.getFieldValue('FLAG'))],
         [generator.valueToCode(block, 'VALUE', Order.NONE)||0]);
 }
 generator.forBlock['ahs_counter'] = function(block) {
     return [statement("getCounter", false,
-        [block.getFieldValue('COUNTER')],
+        [quoted(block.getFieldValue('COUNTER'))],
         []), Order.ATOMIC];
 }
 generator.forBlock['ahs_set_counter'] = function(block) {
     return statement("setCounter", true,
-        [block.getFieldValue('COUNTER')],
+        [quoted(block.getFieldValue('COUNTER'))],
         [generator.valueToCode(block, 'VALUE', Order.NONE)||0]);
 }
 generator.forBlock['ahs_set'] = function(block) {

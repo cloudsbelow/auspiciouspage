@@ -1,5 +1,5 @@
 
-import { allreps, b_cc, codes, enums, ImmUintWrapper, InstrWrapper, JumpPoint, JumpTargetWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, StringWrapper, toB64, TOK, TOKRE, ValueWrapper } from "./intLib.js"
+import { allreps, b_cc, codes, enums, ImmUintWrapper, InstrWrapper, JumpPoint, JumpTargetWrapper, MAXDEPTH, orderOfOps, RegWrapper, reverseObj, stringRegistry, StringWrapper, toB64, TOK, TOKRE, ValueWrapper } from "./intLib.js"
 
 class Stack extends Array{peek(){return this[this.length-1]}empty(){return this.length==0};}
 
@@ -256,7 +256,7 @@ Scope.prototype.compile = function(instrs, fitsim,iftarg=null){
       } 
       const reg = this.compileLine(instrs, targs, l[l.length-1],fitsim)
       chset.forEach(x=>{
-        instrs.push([codes.storeChannel,reg,new ImmUintWrapper(x.length-1),new StringWrapper(x.substring(1))])
+        instrs.push([codes.storeChannel,reg,new StringWrapper(x.substring(1))])
       })
       if(i==0 && (this.type=='if'||this.type=='while')){
         instrs.push([codes.jz, reg, end.jump()])
@@ -277,6 +277,15 @@ export class IntProg{
   constructor(text){
     this.using = {}
     this.usingctr = 0;
+    stringRegistry._clear();
+    let a;
+    let ntext = ""
+    let lidx = 0;
+    text.matchAll(/"(?:\\.|[^"\\])*"/gm).forEach(match=>{
+      ntext+=text.substring(lidx,match.index)+stringRegistry._wrap(match[0])
+      lidx=match.index+match[0].length
+    })
+    text = ntext+text.substring(lidx);
     const prog  = text.replaceAll(/\/\/.*$/gm,"").replaceAll(/\s/gm,"");
     let str = prog;
     for(let [sub, tok] of allreps){

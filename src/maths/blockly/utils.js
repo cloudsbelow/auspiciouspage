@@ -10,4 +10,8 @@ export function statement(name, nextLine, stringList, intList){
     return `${name}${stringList.length>0?`<${stringList}>`:""}(${intList})${!nextLine?"":";\n"}`
 }
 
+export function quoted(str){
+    if(str[0]=='"') return str;
+    return `"${str}"`
+}
 export const generator = new Generator('AuspiciousScript');
