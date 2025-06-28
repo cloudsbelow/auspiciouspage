@@ -49,8 +49,10 @@ window.addEventListener("beforeunload",()=>{
   if(confirm("You have unsaved work. Save it?"))save();
 })
 keys.on.S.add((event)=>{
-  event.preventDefault();
-  if(event.ctrlKey && currentLoadInfo.inmenus == 0) save()
+  if(event.ctrlKey && currentLoadInfo.inmenus == 0){
+    save()
+    event.preventDefault();
+  }
 })
 
 const loadcont = document.getElementById("loadcontainer")

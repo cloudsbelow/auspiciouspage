@@ -24,7 +24,7 @@ export function registerFmodBlocks(){
     var strs = [quoted(block.getFieldValue('EV'))]
     var ent = block.getFieldValue('ENT')
     if(ent!='this') strs.push(ent)
-    return [statement("fmodP",true,strs,[]),0]
+    return statement("fmodP",true,strs,[])
   })
   reg("aha_PlayInline",function(){
     this.appendDummyInput('').appendField('Play event').appendField(new FieldTextInput('event:/'),'EV').appendField('at marked entity').appendField(new FieldTextInput('this'),'ENT');
