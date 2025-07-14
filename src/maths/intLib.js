@@ -193,8 +193,9 @@ const doSimpleAccToks = (op,toks,reg,fn,instrs)=>{
  */
 const simpleImmSwap = (op, reg, first, second, instrs, swapped=0)=>{
   if(swapped>2) throw Error("bad");
-  if(first[1]!==null)simpleImmSwap(op,reg,second,first,instrs,swapped++);
-  if(second[1]===null) instrs.push([codes[op],reg,first[0],second[0]]);
+  if(first[1]!==null)return simpleImmSwap(op,reg,second,first,instrs,swapped+1);
+  if(second[1]===null)instrs.push([codes[op],reg,first[0],second[0]]);
+
   else instrs.push([codes[op+"I"],reg,first[0],new ImmIntWrapper(second[1])])
 }
 

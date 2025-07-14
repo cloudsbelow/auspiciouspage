@@ -33,7 +33,11 @@ export function addControlBlocks(){
         console.log(nextCode)
         lastasm = compiledout.innerText = pcomp(nextCode);
         keys.on.Escape.add(closeOutput);
-      } catch(ex){alert('Some error occured:\n'+ex);console.error(ex)}
+      } catch(ex){
+        compiledout.innerText = "-ERROR-"
+        //alert('Some error occured:\n'+ex);
+        console.error("Error:",ex)
+      }
     }, false, {
 
     }), '');
