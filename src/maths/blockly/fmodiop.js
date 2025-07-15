@@ -1,5 +1,5 @@
 import { FieldTextInput } from "blockly";
-import { generator, register, simpleBlock, statement,quoted } from "./utils";
+import { generator, register, simpleBlock, statement,quoted, regSimple } from "./utils";
 
 
 
@@ -8,11 +8,7 @@ export const fmodColor = 310;
 
 export function registerFmodBlocks(){
   const res = [];
-  const reg = (name,fn, cg)=>{
-    register(name,res, simpleBlock(fn));
-    generator.forBlock[name] = cg
-  }
-  reg("aha_Play",function(){
+  regSimple("aha_Play",res,function(){
     this.appendDummyInput('').appendField('Play event').appendField(new FieldTextInput('event:/'),'EV').appendField('at marked entity').appendField(new FieldTextInput('this'),'ENT');
     this.setInputsInline(true)
     this.setTooltip('Play an event and return a handle to it');
@@ -26,7 +22,7 @@ export function registerFmodBlocks(){
     if(ent!='this') strs.push(ent)
     return statement("fmodP",true,strs,[])
   })
-  reg("aha_PlayInline",function(){
+  regSimple("aha_PlayInline",res,function(){
     this.appendDummyInput('').appendField('Play event').appendField(new FieldTextInput('event:/'),'EV').appendField('at marked entity').appendField(new FieldTextInput('this'),'ENT');
     this.setInputsInline(true)
     this.setTooltip('Play an event and return a handle to it');
@@ -39,7 +35,7 @@ export function registerFmodBlocks(){
     if(ent!='this') strs.push(ent)
     return [statement("fmodP",false,strs,[]),0]
   })
-  reg("aha_SetParam",function(){
+  regSimple("aha_SetParam",res,function(){
     this.appendDummyInput('').appendField('Set param').appendField(new FieldTextInput('param'),'PARAM')
     this.appendValueInput('EV').appendField('of')
     this.appendValueInput('VALUE').appendField('to')
@@ -52,7 +48,7 @@ export function registerFmodBlocks(){
   },(b)=>statement("fmodPS",true,
     [quoted(b.getFieldValue('PARAM'))],
     [generator.valueToCode(b,"EV",999),generator.valueToCode(b,"VALUE",999)]))
-  reg("aha_GetParam",function(){
+  regSimple("aha_GetParam",res,function(){
     this.appendDummyInput('').appendField('Get param').appendField(new FieldTextInput('param'),'PARAM')
     this.appendValueInput('EV').appendField('of event')
     this.setInputsInline(true)
@@ -62,7 +58,7 @@ export function registerFmodBlocks(){
     this.setColour(fmodColor);
   },(b)=>[statement("fmodPG",false,
     [quoted(b.getFieldValue('PARAM'))],[generator.valueToCode(b,"EV",999)]),0])
-  reg("aha_GetParamFinal",function(){
+  regSimple("aha_GetParamFinal",res,function(){
     this.appendDummyInput('').appendField('Get param (final)').appendField(new FieldTextInput('param'),'PARAM')
     this.appendValueInput('EV').appendField('of event')
     this.setInputsInline(true)
@@ -72,7 +68,7 @@ export function registerFmodBlocks(){
     this.setColour(fmodColor);
   },(b)=>[statement("fmodPF",false,
     [quoted(b.getFieldValue('PARAM'))],[generator.valueToCode(b,"EV",999)]),0])
-  reg("aha_Stop",function(){
+  regSimple("aha_Stop",res,function(){
     this.appendValueInput('EV').appendField('Stop event')
     this.setInputsInline(true)
     this.setTooltip('Stop an audio event');
@@ -81,7 +77,7 @@ export function registerFmodBlocks(){
     this.setNextStatement(true, null);
     this.setColour(fmodColor);
   },(b)=>statement("fmodS",true,[],[generator.valueToCode(b,"EV",999)]))
-  reg("aha_Trust",function(){
+  regSimple("aha_Trust",res,function(){
     this.appendValueInput('EV').appendField('Trust event')
     this.setInputsInline(true)
     this.setTooltip('Stops this event from being automatically stopped on death/transition. Returns whether the event existed.');
@@ -90,7 +86,7 @@ export function registerFmodBlocks(){
     this.setNextStatement(true, null);
     this.setColour(fmodColor);
   },(b)=>statement("fmodC",true,[],[generator.valueToCode(b,"EV",999)]))
-  reg("aha_SetVolume",function(){
+  regSimple("aha_SetVolume",res,function(){
     this.appendValueInput('EV').appendField('Set volume of')
     this.appendValueInput('VALUE').appendField('to')
     this.setInputsInline(true)
@@ -102,7 +98,7 @@ export function registerFmodBlocks(){
   },(b)=>statement("fmodV",true,
     [],
     [generator.valueToCode(b,"EV",999),generator.valueToCode(b,"VALUE",999)]))
-  reg("aha_SetTimeline",function(){
+  regSimple("aha_SetTimeline",res,function(){
     this.appendValueInput('EV').appendField('Set timeline position of')
     this.appendValueInput('VALUE').appendField('to')
     this.setInputsInline(true)

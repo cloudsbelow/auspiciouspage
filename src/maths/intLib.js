@@ -121,7 +121,8 @@ export const enums=`
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
     multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
-    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit
+    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit, yieldMs,
+    triggerTrigger, triggerTriggerI
 `.replaceAll(/\s/g,"").split(",")
 export const codes = new Proxy(codes_,{
   get:(targ, p, rec)=>{
@@ -163,6 +164,10 @@ const addMaybeImmInstr = (tuple, op, instrs)=>{
     instrs.push([codes[op],tuple[0]])
   }
   if(!codes[op+(tuple[1]===null?"":"I")]) throw Error("bad")
+}
+const addNotImmInstr = (tuple, op, instrs)=>{
+  if(tuple[0]===null || tuple[0]===undefined) throw Error("bad");
+  instrs.push([codes[op],tuple[0]])
 }
 const doSimpleAcc = (op,s,reg,fn,instrs)=>{
   const v=s.expr;let toks = v.match(TOKRE);
@@ -239,6 +244,18 @@ const pfuncs={
   wait:{
     mkinstrs:(toks,reg,fn,instrs)=>{
       addMaybeImmInstr(fn(toks[0]),"yield",instrs)
+    },
+    canimm:true
+  },
+  waitms:{
+    mkinstrs:(toks,reg,fn,instrs)=>{
+      addNotImmInstr(fn(toks[0]),"yieldMs",instrs)
+    },
+    canimm:false
+  },
+  triggerTrigger:{
+    mkinstrs:(toks,reg,fn,instrs)=>{
+      addMaybeImmInstr(fn(toks[0]),"triggerTrigger",instrs)
     },
     canimm:true
   }

@@ -47,6 +47,10 @@ generator.forBlock['ahc_wait'] = function(block) {
     return statement("wait", true,
         [], [generator.valueToCode(block, 'CS', Order.ATOMIC)||0]);
 }
+generator.forBlock['ahc_waitMs'] = function(block) {
+    return statement("waitms", true,
+        [], [generator.valueToCode(block, 'MS', Order.ATOMIC)||0]);
+}
 
 //### statement
 

@@ -106,11 +106,18 @@ export function addControlBlocks(){
     this.setTooltip("Exit the program");
   });
   Blocks['ahc_wait'] = simpleBlock(function() {
-    this.appendValueInput("CS").setCheck(null).appendField("wait");
+    this.appendValueInput("CS").setCheck(null).appendField("waitCs");
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setColour(controlColor);
     this.setTooltip("Time to pause program execution (centiseconds)");
+  });
+  Blocks['ahc_waitMs'] = simpleBlock(function() {
+    this.appendValueInput("MS").setCheck(null).appendField("waitMs");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(controlColor);
+    this.setTooltip("Time to pause program execution (milliseconds)");
   });
   return [
     {kind:"block", type:"program_header"},
@@ -120,5 +127,6 @@ export function addControlBlocks(){
     {kind:"block", type:"ahc_continue"},
     {kind:"block", type:"ahc_exit"},
     {kind:"block", type:"ahc_wait"},
+    {kind:"block", type:"ahc_waitMs"},
   ];
 }

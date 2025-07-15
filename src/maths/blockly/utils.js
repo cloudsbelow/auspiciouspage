@@ -14,4 +14,8 @@ export function quoted(str){
     if(str[0]=='"') return str;
     return `"${str}"`
 }
+export const regSimple = (name, res,fn, cg)=>{
+    register(name,res, simpleBlock(fn));
+    generator.forBlock[name] = cg
+}
 export const generator = new Generator('AuspiciousScript');

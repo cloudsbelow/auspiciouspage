@@ -1,5 +1,5 @@
 import { FieldDropdown, FieldCheckbox, FieldTextInput, FieldNumber } from "blockly";
-import {simpleBlock, register} from "./utils.js";
+import {simpleBlock, register, regSimple, statement, generator} from "./utils.js";
 //import {FieldAngle} from "@blockly/field-angle";
 
 export const gameColor = 350;
@@ -70,6 +70,15 @@ export function addIngameBlocks(){
         this.setHelpUrl('');
         this.setColour(gameColor);
     }));
+    regSimple("ahs_trigt", toReturn, function(){
+        this.appendValueInput("NODE").setCheck(null).appendField("Trigger trigger on node");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(gameColor);
+        this.setTooltip("Call the OnEnter function of the smallest trigger overlapping this node (node 0 is entity itself)");
+      },(b)=>statement("triggerTrigger",true,
+        [],
+        [generator.valueToCode(b,"NODE",999)]))
 
     return toReturn;
 }
