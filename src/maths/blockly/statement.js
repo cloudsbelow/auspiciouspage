@@ -111,7 +111,7 @@ export function addStatementBlocks(){
   
   register("ahs_print", toReturn, {
     init: function() {
-      this.appendDummyInput().appendField("print").appendField(new FieldTextInput("text"), "NAME");
+      this.appendDummyInput().appendField("print").appendField(new FieldTextInput("text"), "TEXT");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(160);

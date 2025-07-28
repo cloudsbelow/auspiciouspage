@@ -366,7 +366,7 @@ export const pcomp=(ex, bits=8)=>{
   let b=a.compile(8);
   const using = []
   for(const [ch, reg] of Object.entries(a.using)) using[reg]=ch
-  let header = new Uint16Array([1,using.length,b[1],0])
+  let header = new Uint16Array([2,using.length,b[1],0])
   let c=[header, new Uint32Array([b[0].byteLength])]
   let offset = 12;
   using.forEach(x=>{

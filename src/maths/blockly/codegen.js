@@ -58,7 +58,7 @@ generator.forBlock['ahs_print'] = function(block, generator) {//todo
     //todo: mutator
     const values = [];
     for (let i = 0; i < block.itemCount_; i++) {
-        const valueCode = generator.valueToCode(block, 'VALUE' + i,
+        const valueCode = generator.valueToCode(block, 'ARG' + i,
             Order.ATOMIC);
         if (valueCode) {
             values.push(valueCode);
