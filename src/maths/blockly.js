@@ -201,6 +201,7 @@ Blockly.common.defineBlocks({
                     ['y position', 'POSITIONY'],
                     ['number of dashes', 'DASHCOUNT'],
                     ['speed', 'SPEED'],
+                    ['is alive', 'ISALIVE'],
                 ]), 'TYPE');
             this.setOutput(true, null);
             this.setTooltip('');
@@ -364,6 +365,7 @@ const propMap = {
 
     DASHCOUNT:[["Dashes"]],
     SPEED:[["Speed", "Length"],[]],
+    ISALIVE:[["StClimb"]],
 };
 generator.forBlock['get_player'] = function(block) {
     const args = propMap[block.getFieldValue('TYPE')];
