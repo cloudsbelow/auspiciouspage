@@ -4,8 +4,8 @@ import {Order} from "../blockly/codegen.js"
 const color = 0;
 const label="Madeline Crystal Helper"
 
-const toReturn = [];
-register("MCrysHelper_getCrystal", toReturn, simpleBlock(function(){
+const content = [];
+register("MCrysHelper_getCrystal", content, simpleBlock(function(){
     this.appendDummyInput('NAME')
         .appendField('is player in Theo Crystal');
     this.setInputsInline(true)
@@ -15,7 +15,7 @@ register("MCrysHelper_getCrystal", toReturn, simpleBlock(function(){
     this.setOutput(true, 'Number');
     this.setColour(color);
 }));
-register("MCrysHelper_setCrystal", toReturn, simpleBlock(function(){
+register("MCrysHelper_setCrystal", content, simpleBlock(function(){
     this.appendValueInput('INCRYSTAL')
         .appendField('set player in Theo Crystal');
     this.setInputsInline(true)
@@ -36,8 +36,8 @@ const generators={
     },
 };
 
-export {
-    toReturn as content,
+export {//must be named these!!
+    content,
     generators,
     color,
     label,
