@@ -4,15 +4,16 @@
   <meta charset="UTF-8">
   <title>Blockly Example</title>
   <style>
-    html, body { 
-      height: 100%; 
-      margin: 0; 
-      overflow:hidden; 
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow:hidden;
       --height:50px;
       --dark:#212426;
       --dark-fg:#656769;
       --mid:#47494a;
       background-color: var(--mid);
+      font-family: sans-serif;
     }
     #blocklyDiv {
       position:absolute;
@@ -37,26 +38,24 @@
       color:white;
       display:flex;
       flex-direction: row;
-      width:130px;
       justify-content: space-between;
-      height:25px;
-      margin-top:calc(var(--height) - 25px);
+      height:calc(var(--height)*0.6);
+      margin-top:calc(var(--height)*0.2);
       margin-right: 50px;
     }
     #saveloaditems div{
-      display:flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      border-radius: 10px;
       background-color: red;
-      width:40px;
+      padding: 0px 10px;
+      margin: 0 5px;
+      line-height: calc(var(--height)*0.6);
     }
     #saveloaditems div:hover{
       background-color: rgb(255,100,100);
     }
     #namebar{
       color:white;
-      top: -10px;
+      margin-top: 0;
     }
     #namebar.unsaved{
       font-style: italic;
@@ -175,7 +174,7 @@
     }
 
     .blocklyMainBackground {
-      fill: var(--dark) !important; 
+      fill: var(--dark) !important;
     }
     .blocklyFlyoutBackground {
       fill: var(--mid) !important;
@@ -187,6 +186,16 @@
       -moz-user-select: none;     /* Firefox */
       -ms-user-select: none;      /* IE/Edge */
       cursor: pointer;            /* Optional: makes it look like a button */
+    }
+
+    #loadmenuNewbutton{
+      cursor:pointer;
+      background-color:#ffffff22;
+      padding:5px 10px;
+      border-radius: 15px;
+    }
+    #loadmenuNewbutton:hover{
+      background-color:#ffffff44;
     }
   </style>
 </head>
