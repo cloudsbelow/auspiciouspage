@@ -3,13 +3,13 @@ import { operatorMap, operators } from "./statement";
 import { statement, generator, quoted } from "./utils";
 
 
-const Order = {//TODO
+export const Order = {//TODO
     ATOMIC: 0,
     NONE:999
 };
 
 //### control
-export function initGen(){
+export function initGen(extensions){
 generator.forBlock["program_header"] = _=>"";
 generator.forBlock['ahc_if'] = function(block) {
     // If/elseif/else condition. copied from https://github.com/google/blockly/blob/afe53c5194e13fc4356b240d9ff0652e74f7ed7c/generators/javascript/logic.ts
@@ -155,5 +155,11 @@ generator.forBlock['ahs_kill_player'] = function(block) {
         [],
         [generator.valueToCode(block, 'KILL', Order.NONE)||0, ...(block.getFieldValue('CUSTOMDIR')==="TRUE"?
             [Math.round(Math.cos(angle_dir)*10), Math.round(Math.sin(angle_dir)*10)] : [])]);
+}
+
+for(const extensionGroup of extensions){
+    for(const [key,val] of Object.entries(extensionGroup)){
+        generator.forBlock[key]=val;
+    }
 }
 }

@@ -19,6 +19,19 @@ const compiledout = document.getElementById("compiled")
 document.getElementById("copybutton").onclick = ()=>{
   navigator.clipboard.writeText(lastasm); alert("done");
 }
+genout.addEventListener("input",_=>{
+  let timeout=500;
+  while([...genout.children].some(child=>child.tagName === "DIV") && timeout-->0) {
+    let counter=0;
+    while (counter < genout.children.length) {
+      if (genout.children[counter].tagName === "DIV") {
+        genout.replaceChild(document.createTextNode(genout.children[counter].textContent+"\n"), genout.children[counter]);
+      }
+      counter++;
+    }
+  }
+  lastasm = compiledout.innerText = pcomp(genout.textContent);
+})
 
 
 export function addControlBlocks(){

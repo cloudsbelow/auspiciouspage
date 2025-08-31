@@ -6,9 +6,11 @@ import {addControlBlocks, controlColor} from "./blockly/control"
 import { addStatementBlocks, mathColor } from "./blockly/statement";
 import {addIngameBlocks, gameColor} from "./blockly/ingame.js";
 import { fmodColor, registerFmodBlocks } from "./blockly/fmodiop.js";
+import { registerExtensions } from "./extensions.js";
 import { generator } from "./blockly/utils.js";
 import { initGen } from "./blockly/codegen.js"
 
+const extensions=registerExtensions();
 const tabs = [{
   content:addControlBlocks(),
   color:controlColor,
@@ -25,7 +27,13 @@ const tabs = [{
   content:registerFmodBlocks(),
   color:fmodColor,
   label:"Audio"
-}]
+},...extensions.map(e=>{
+  return {
+    content:e.content,
+    color:e.color,
+    label:e.label
+  }
+})];
 const toolbox = {
   kind: "flyoutToolbox",
   contents: tabs[0]?.content??[]
@@ -59,7 +67,7 @@ saveLoadSetup(()=>{
 },(state)=>{
   return serialization.workspaces.load(JSON.parse(state),workspace)
 });
-initGen()
+initGen(extensions.map(e=>e.generators));
 
 generator.init(workspace);
 generator.nameDB_ = new Names();
